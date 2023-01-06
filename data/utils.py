@@ -786,7 +786,7 @@ def log_print(_table,_id,_col,_stack,*_msg):
         cursor.execute(update_sql)
         connection.commit()
 
-
+#TODO: DELETE THIS IF SENDING????
 def log_print_cal(_id, *_msg):
     """
     Add log information to the calibration
