@@ -11,14 +11,37 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
 }).addTo(mymap);
 
 
+//bins are: green  x < 400, yellow 400 - 550, orange 550-650, red x > 650
+
+
+
 //Todo not make this hard coded
-fetch('coordinates.json')
+fetch("./coords.json")
   .then(response => response.json())
   .then(coordinates => {
     for (let i = 0; i < coordinates.length; i++) {
-      const x = coordinates[i][0];
-      const y = coordinates[i][1];
-      const marker = L.marker([x, y]).addTo(mymap);
+        const lat = coordinates[i]["Latitude"];
+        const lon = coordinates[i]["Longitude"];
+        let color = "";
+        if (coordinates[i]["co2_corrected"] <= 400) {
+            color = 'green';
+        } else if (coordinates[i]["co2_corrected"] <= 500 && coordinates[i]["co2_corrected"] > 400) {
+            color = 'gold';
+        } else if (coordinates[i]["co2_corrected"] <= 650 && coordinates[i]["co2_corrected"] > 500) {
+            color = 'orange';
+        } else {
+            color = 'red';
+        }
+
+        //Add a pop up for the name 
+        var marker  = L.marker([lat, lon], {icon: new L.Icon({
+          iconUrl: `https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
+          iconSize: [20, 28] 
+          })})
+        
+        marker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO2 Level: " + coordinates[i]["co2_corrected"]);
+        marker.addTo(mymap);
+        
     }
   });
 
