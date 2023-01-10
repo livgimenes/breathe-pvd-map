@@ -3,27 +3,46 @@ import json
 import pandas as pd
 
 
-#TODO: change this to be optimized
-rows = []
-with open('locations.csv', 'r') as csvfile:
-    reader = csv.DictReader(csvfile)
-    for row in reader:
-        rows.append(row)
+#load the corrected data from the website 
+#pd.read_csv('data.csv', usecols=['Name', 'Age'])
+corrected_data = pd.read_csv("/Users/liviagimenes/Documents/CS/Breath Providence/breathe-pvd/data/corrected_avg.csv",usecols=["datetime","node_id","co2_corrected_avg_T_drift_applied"])
 
-lat_lng_pairs = [[row['Latitude'], row['Longitude']] for row in rows]
+#TODO: change this when changing the making the main function
+corrected_data = corrected_data.rename(columns={'co2_corrected_avg_T_drift_applied': 'co2_corrected'})
 
-converted_coordinates = []
-for coord in lat_lng_pairs:
-    lat, lon = coord
-    lat_value = float(lat.split(' ')[0])
-    lon_value = float(lon.split(' ')[0])
-    if lat[-1] == 'S':
-        lat_value *= -1
-    if lon[-1] == 'W':
-        lon_value *= -1
-    converted_coordinates.append([lat_value, lon_value])
+corrected_data = corrected_data.loc[corrected_data['datetime'] == '2022-12-15 05:00:00-08:00']
 
-with open('coordinates.json', 'w') as f:
-  json.dump(converted_coordinates, f)
 
-print(converted_coordinates)
+print(corrected_data)
+sensor_data = pd.read_csv('/Users/liviagimenes/Documents/CS/Breath Providence/breathe-pvd/data/breathe_providence_sensors.csv', usecols=["Sensor ID", "Node ID", "Location","Latitude","Longitude"])
+
+combined_data = pd.merge(corrected_data, sensor_data, left_on='node_id', right_on='Node ID')
+combined_data = combined_data.drop("node_id", axis='columns')
+combined_data = combined_data.drop("datetime", axis='columns')
+
+print(combined_data)
+
+def convert_latitude(latitude):
+    value, direction = latitude.split()
+    value = float(value)
+    if direction == 'S':
+        value = -value
+    return value
+
+def convert_longitude(longitude):
+    value, direction = longitude.split()
+    value = float(value)
+    if direction == 'W':
+        value = -value
+    return value
+
+#Convert Latitute and Longitude
+combined_data['Latitude'] = combined_data['Latitude'].apply(convert_latitude)
+combined_data['Longitude'] = combined_data['Longitude'].apply(convert_longitude)
+
+print(combined_data)
+
+
+#TODO: Figure out how to save this automatically in the web folder
+combined_data.to_json('coords.json', orient='records')
+
