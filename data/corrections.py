@@ -1,4 +1,5 @@
-"C02 calibration scripts for Breathe Providence Group"
+
+"""C02 calibration scripts for Breathe Providence Group. Corrections for a network without a Picarro machine"""
 
 
 import pandas as pd
@@ -12,8 +13,6 @@ import utils
 
 from sklearn.linear_model import LinearRegression
 
-#TODO: See when you need to add the proper todos 
-#TODO: Check to see if any of the functions can be optimized
 
 
 #Change this to only reflect active nodes
@@ -36,14 +35,14 @@ def get_requests(node_name,node_id,variable,start_date,start_time,end_date,end_t
   return base_url + custom_url
 
 def get_requests_for_row(row):
-  """Helper for get_data.Gets requets for a given row, for a pre-defined start-date,end-date,pollution variant and time """
+  """Helper for get_data. Gets requets for a given row, for a pre-defined start-date,end-date,pollution variant and time """
 
   #Variables bellow can be modified, to get a different time frame
 
   #Note: Numbers have to be in the format year-month-day, this is not the standard datetime module
   start_date = "2022-9-1"
   end_date = str(datetime.datetime.now())[0:10]
-  variable = "co2_corrected_avg,temp"
+  variable = "co2_corrected_avg, temp"
   default_time = "00:00:00" 
 
   data = pd.read_csv(get_requests(row["Sensor ID"], row["Node ID"],variable, start_date,default_time,end_date,default_time))
@@ -51,7 +50,7 @@ def get_requests_for_row(row):
 
 
 def get_data():
-  """Loads all the nodes from NODE_LIST from the beginning of the project to the end and will store them into a pandas dataframe"""
+  """Loads all the measurments from the nodes and store them into a pandas dataframe. To modify specifics go to get_requests for row"""
   all_data = sensors_df.apply(get_requests_for_row, axis=1)
   return pd.concat(all_data.values)
 
@@ -64,30 +63,28 @@ def pst_to_est(time):
   date = date.astimezone(timezone('US/Pacific'))
   return date
 
-def clean_data(dataframe):
+def clean_data(data):
   """Cleans the panda dataframe removing missing data, drops unecessary columns and tranforms data from pst to est"""
 
   #drop unecessary columns
-  dataframe = dataframe.drop(columns=['epoch', 'local_timestamp',"node_file_id"])
+  data = data.drop(columns=['epoch', 'local_timestamp',"node_file_id"])
 
   #remove missing data, -999
-  dataframe = dataframe.replace({'co2_corrected_avg': {-999.00000: np.NaN}})
-  dataframe = dataframe.dropna(subset=['datetime', 'co2_corrected_avg'])
+  data = data.replace({'co2_corrected_avg': {-999.00000: np.NaN}})
+  data = data.dropna(subset=['datetime', 'co2_corrected_avg'])
 
   #change time zones 
-  dataframe['datetime'] = dataframe['datetime'].map(lambda x: pst_to_est(x))
+  data['datetime'] = data['datetime'].map(lambda x: pst_to_est(x))
 
-  return dataframe
+  #rename co2 column to this 
+  data.rename(columns={'co2_corrected_avg': 'orginal_co2_avg'}, inplace=True)
 
-def generate_reference_data(data):
-  """"Generates the average of the median of all nodes to refernece for calculations"""
-  data['co2_ref'] = data.groupby('datetime')['co2_corrected_avg'].transform('median')
   return data
 
 
-#add helpers
 def get_fit(row,slope):
-#TODO: Add description
+  """Helper functions used in generate_measurements to get the off_set for the calculated corrections"""
+
   if slope is not None:
     _start_x = slope['start_x']
     current_x = calendar.timegm(row['datetime'].timetuple())
@@ -100,27 +97,20 @@ def get_fit(row,slope):
 
 
 def get_corrected(row,slope,slope_temp):
-  #TODO: Add description
+  """"Helper function used in generate_measurements to get the correct co2 avg including drift"""
+
   _start_x = slope['start_x']
   current_x = calendar.timegm(row['datetime'].timetuple())
   start_x = current_x - _start_x
   offset = float(slope['m']) * start_x + float(slope['b'])
-
-  # for additive
   val = float(row['co2_corrected_avg'])  - offset - slope_temp * float(row['temp'])
   return val
 
 
 def generate_percentiles(data,time_window):
-  #TODO: Add description
+  """Helper function that calculates the tenth percentile for every time window for reference data and regular data """
   temp_window = 1
-  # creating empty rows in data frame for tenth percentile data
-  data['tenth_percentile_ref'] = None
-  data['tenth_percentile'] = None
 
-  print("###### Pre-percentile data")
-  print(data.shape)
-  print(data.head())
   for j, row in data.iterrows():
     row_time = row['datetime']
     start_time = row_time - datetime.timedelta(hours=time_window / 2)
@@ -136,14 +126,7 @@ def generate_percentiles(data,time_window):
   return data
 
 def generate_slopes(data, time_window):
-  #TODO: Add description
-  data['m'] = None
-  data['b'] = None
-
-
-  print("###### Pre slopes data")
-  print(data.shape)
-  print(data.head())
+  """Helper that generates the m, b values for the slope by executing a linear regression"""
 
   for j, row in data.iterrows():
 
@@ -158,7 +141,7 @@ def generate_slopes(data, time_window):
                                      np.array(data_subset['tenth_percentile'] - data_subset['tenth_percentile_ref'],
                                               dtype=float))
 
-    #TODO:See if I am using this for anything                                          
+    #Value but could be printed or for different types of modifications when calibrating                                   
     r_sq = reg.score(np.array(data_subset['temp']).reshape((-1, 1)),
                          np.array(data_subset['tenth_percentile'] - data_subset['tenth_percentile_ref'], dtype=float))
 
@@ -170,11 +153,15 @@ def generate_slopes(data, time_window):
   return data
 
 def generate_measurements(data):
-  #TODO: Add description
+  """Compiles helpers and generates final dataframe with slope and offset + final correct co2 avg including drift"""
   
   #Change to adjust the time window
   time_window = 24 * 7 * 3
-  data = generate_reference_data(data)
+
+  #Adding reference data
+  data['co2_ref'] = data.groupby('datetime')['co2_corrected_avg'].transform('median')
+
+  #Calling helper functions 
   data = generate_percentiles(data,time_window)
   data = generate_slopes(data, time_window)
 
@@ -182,12 +169,12 @@ def generate_measurements(data):
 
     slope_temp = np.median(data['m'])
 
-    data['offset_Tcorrected'] = None
     data['offset_Tcorrected'] = data['tenth_percentile'] - slope_temp * data['temp'] - data['tenth_percentile_ref']
 
-    #TODO: Look into if you need to change this 
+    #dropping any null just in case
     data = data.dropna(subset=['b', 'offset_Tcorrected'])
 
+    #function imported from utils.py, include this file for the function to work
     slope = utils.calculate_slope(data, 'offset_Tcorrected', 'datetime')
     print(slope)
     data['offset_fit'] = data.apply(get_fit, axis=1, args=[slope])
@@ -201,9 +188,14 @@ def generate_measurements(data):
 
 def generate_corrections():
   """Compiles all of the functions to retrive the data, generate corrections, and save data into a csv"""
-  pre_processed_data = generate_reference_data(clean_data(get_data()))
+  pre_processed_data = clean_data(get_data())
+  
+  pre_processed_data = pd.read_csv("/Users/liviagimenes/Documents/CS/Breath Providence/breathe-pvd/data/dummy.csv")
+  pre_processed_data['datetime'] = pd.to_datetime(pre_processed_data['datetime'])
+  print(pre_processed_data.head())
+
   corrected_data = generate_measurements(pre_processed_data)
-  corrected_data.to_csv("corrected_avg.csv", encoding='utf-8', index=False)
+  corrected_data.to_csv("new_corrected_avg.csv", encoding='utf-8', index=False)
 
 
 if __name__ == "__main__":
