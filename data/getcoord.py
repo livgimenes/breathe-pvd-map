@@ -1,6 +1,7 @@
 import csv
 import json
 import pandas as pd
+import os
 
 
 #load the corrected data from the website 
@@ -15,8 +16,11 @@ corrected_data = corrected_data.loc[corrected_data['datetime'] == '2022-12-15 05
 
 print(corrected_data)
 sensor_data = pd.read_csv('/Users/liviagimenes/Documents/CS/Breath Providence/breathe-pvd/data/breathe_providence_sensors.csv', usecols=["Sensor ID", "Node ID", "Location","Latitude","Longitude"])
-
-combined_data = pd.merge(corrected_data, sensor_data, left_on='node_id', right_on='Node ID')
+print(sensor_data)
+combined_data = pd.merge(corrected_data, sensor_data, left_on='node_id', right_on='Node ID', how="right")
+#make the Nan into -999
+combined_data = combined_data.fillna(-999)
+print(combined_data)
 combined_data = combined_data.drop("node_id", axis='columns')
 combined_data = combined_data.drop("datetime", axis='columns')
 
@@ -42,7 +46,7 @@ combined_data['Longitude'] = combined_data['Longitude'].apply(convert_longitude)
 
 print(combined_data)
 
+directory = "/Users/liviagimenes/Documents/CS/Breath Providence/breathe-pvd/web"
+combined_data.to_json(os.path.join(directory, 'coords.json'), orient='records')
 
-#TODO: Figure out how to save this automatically in the web folder
-combined_data.to_json('coords.json', orient='records')
 

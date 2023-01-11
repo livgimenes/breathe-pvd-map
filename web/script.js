@@ -11,11 +11,9 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
 }).addTo(mymap);
 
 
-//bins are: green  x < 400, yellow 400 - 550, orange 550-650, red x > 650
+//Add a legend + show case somewhere the date and also add the measurement
 
 
-
-//Todo not make this hard coded
 fetch("./coords.json")
   .then(response => response.json())
   .then(coordinates => {
@@ -23,24 +21,33 @@ fetch("./coords.json")
         const lat = coordinates[i]["Latitude"];
         const lon = coordinates[i]["Longitude"];
         let color = "";
-        if (coordinates[i]["co2_corrected"] <= 400) {
+        if (coordinates[i]["co2_corrected"] <= 400 && coordinates[i]["co2_corrected"] > 0) {
             color = 'green';
         } else if (coordinates[i]["co2_corrected"] <= 500 && coordinates[i]["co2_corrected"] > 400) {
             color = 'gold';
         } else if (coordinates[i]["co2_corrected"] <= 650 && coordinates[i]["co2_corrected"] > 500) {
-            color = 'orange';
-        } else {
+            color = 'darkorange';
+        } else if (coordinates[i]["co2_corrected"] > 650){
             color = 'red';
+        }else{
+          color = 'grey';
         }
 
         //Add a pop up for the name 
-        var marker  = L.marker([lat, lon], {icon: new L.Icon({
-          iconUrl: `https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
-          iconSize: [20, 28] 
-          })})
-        
-        marker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO2 Level: " + coordinates[i]["co2_corrected"]);
-        marker.addTo(mymap);
+      let circleMarker = L.circleMarker([lat, lon], {
+        radius: 8,
+        color: 'white',
+        weight: 1,
+        fillColor: color,
+        fillOpacity: 0.8
+    });
+      
+      if(coordinates[i]["co2_corrected"] == -999.000000){
+        circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO2 Level: Not Available");
+      }else{
+        circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO2 Level: " + coordinates[i]["co2_corrected"] + " (ppm)");
+      }
+      circleMarker.addTo(mymap);
         
     }
   });
