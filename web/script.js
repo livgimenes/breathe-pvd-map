@@ -2,6 +2,9 @@ const apiKey = 'pk.eyJ1IjoiYWxmcmVkMjAxNiIsImEiOiJja2RoMHkyd2wwdnZjMnJ0MTJwbnVme
 
 const mymap = L.map('map').setView([41.831391, -71.415804], 13);
 
+let date = '2022-12-15';
+let time = "5 AM"
+
 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
     maxZoom: 18,
     id: 'mapbox/streets-v11',
@@ -11,8 +14,47 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
 }).addTo(mymap);
 
 
-//Add a legend + show case somewhere the date and also add the measurement
+class LegendControl extends L.Control {
+  // Define the onAdd method
+  onAdd() {
+      const div = L.DomUtil.create('div', 'legend');
+      div.style.backgroundColor = "white";
+      div.style.padding = "6px";
+      div.style.borderRadius = "6px";
+      div.style.width = "max-content";
+      div.style.position = "absolute";
+      div.style.right = "6px";
+      div.style.top = "6px";
+      div.style.fontSize = "14px";
+      div.innerHTML =  `
+      <div>
+          <b>CO2 Levels</b>
+          <br>
+          Date: ${date}
+          <br>
+          Time:  ${time}
+          <br>
+          <b>Legend</b>
+          <br>
+          <div style="display:inline-block; width: 15px; height: 15px; background-color: grey;"></div> Not Available
+          <br>
+          <div style="display:inline-block; width: 15px; height: 15px; background-color: green;"></div> < 400 ppm
+          <br>
+          <div style="display:inline-block; width: 15px; height: 15px; background-color: gold;"></div> 400-500 ppm 
+          <br>
+          <div style="display:inline-block; width: 15px; height: 15px; background-color: darkorange;"></div> 500-650 ppm
+          <br>
+          <div style="display:inline-block; width: 15px; height: 15px; background-color: red;"></div> > 650 ppm
+      </div>
+  `;
+      return div;
+  }
+}
 
+const legendControl = new LegendControl();
+
+// Add the custom control to the map
+mymap.addControl(legendControl);
 
 fetch("./coords.json")
   .then(response => response.json())
@@ -33,7 +75,6 @@ fetch("./coords.json")
           color = 'grey';
         }
 
-        //Add a pop up for the name 
       let circleMarker = L.circleMarker([lat, lon], {
         radius: 8,
         color: 'white',
