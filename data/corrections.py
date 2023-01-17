@@ -10,10 +10,11 @@ from pytz import timezone
 import matplotlib.pyplot as plt
 import datetime
 import utils
+import urllib
 
 from sklearn.linear_model import LinearRegression
 
-
+#TODO:Change for the variables to be in the end function
 
 #Change this to only reflect active nodes
 ACTIVE_NODES = ["250","267","270","274","276","261","252","257","263"]
@@ -21,6 +22,9 @@ ACTIVE_NODES = ["250","267","270","274","276","261","252","257","263"]
 #Open available nodes
 sensors_df = pd.read_csv("/Users/liviagimenes/Documents/CS/Breath Providence/breathe-pvd/data/breathe_providence_sensors.csv")
 sensors_df = sensors_df[sensors_df["Node ID"].isin(ACTIVE_NODES)]
+sensors_list = sensors_df["Node ID"].tolist()
+
+print(sensors_list)
 
 def get_requests(node_name,node_id,variable,start_date,start_time,end_date,end_time):
   """Given a node_id, measure, start date and end date return the raw cvs files for that node """
@@ -28,6 +32,8 @@ def get_requests(node_name,node_id,variable,start_date,start_time,end_date,end_t
   #generating the url 
   base_url = "http://128.32.208.8"
   
+
+  #TODO: Fix this construction
   custom_url = ("/node/" + str(node_id) 
   + "/measurements_all/csv?name=" + str(node_name) + "&interval=60&variables=" + variable + "&start=" + 
   str(start_date) + "%20" + str(start_time)+ "&end=" + str(end_date) + "%20" + str(end_time) + "&char_type=measurement")
@@ -42,17 +48,63 @@ def get_requests_for_row(row):
   #Note: Numbers have to be in the format year-month-day, this is not the standard datetime module
   start_date = "2022-9-1"
   end_date = str(datetime.datetime.now())[0:10]
-  variable = "co2_corrected_avg, temp"
+  variable = "co2_corrected_avg,temp"
   default_time = "00:00:00" 
-
-  data = pd.read_csv(get_requests(row["Sensor ID"], row["Node ID"],variable, start_date,default_time,end_date,default_time))
+  url = get_requests(urllib.parse.quote(row["Location"]), row["Node ID"],variable, start_date,default_time,end_date,default_time)
+  try:
+    data = pd.read_csv(url)
+  except:
+    data = pd.DataFrame()
+    print("This is the attempted url: " + url)
+    print(f"An error occurred while trying to fetch data from the server")
   return data
 
 
-def get_data():
+def get_data(data):
   """Loads all the measurments from the nodes and store them into a pandas dataframe. To modify specifics go to get_requests for row"""
-  all_data = sensors_df.apply(get_requests_for_row, axis=1)
+  all_data = data.apply(get_requests_for_row, axis=1)
   return pd.concat(all_data.values)
+
+
+######Different way of formating the datas
+
+def format_given_nodes(node_list):
+  node_list = list(set(node_list))
+  node_list.sort()
+  node_string = ','.join(str(node) for node in node_list)
+  return node_string
+
+def get_url_for_all(variable,start_date,start_time,end_date,end_time):
+  nodes = format_given_nodes(sensors_list)
+
+  
+  base_url = "http://128.32.208.8"
+
+  formatted_start = start_date + start_time
+  formatted_end = end_date + end_time
+
+  custom_url = f"/node/{nodes}/measurements_all/zip?name=Multiselect%20Download&interval=60&variables={variable}&start={formatted_start}&end={formatted_end}&chart_type=measurement"
+  return base_url + custom_url
+
+def get_all_data_once():
+
+  went_wrong = 0
+  #TODO: Move it from here
+  start_date = "2022-9-1"
+  end_date = str(datetime.datetime.now())[0:10]
+  variable = "co2_corrected_avg,temp"
+  #TODO: might have todo something different for the time
+  #print(str(datetime.datetime.now().time())[0:8])
+  start_time = "00:00:00" 
+  end_time = str(datetime.datetime.now().time())[0:8]
+
+  print(get_url_for_all(variable, start_date,start_time,end_date,end_time))
+  try:
+    data = pd.read_csv(get_url_for_all(variable, start_date,start_time,end_date,end_time))
+  except Exception as e:
+    print(f"An error occurred while trying to fetch data from the server: {e}")
+    went_wrong += 1
+  return data
 
 def pst_to_est(time):
   """Takes in time represented as a string and returns, in the same format, the time converted into est. Returns a str,"""
@@ -77,7 +129,7 @@ def clean_data(data):
   data['datetime'] = data['datetime'].map(lambda x: pst_to_est(x))
 
   #rename co2 column to this 
-  data.rename(columns={'co2_corrected_avg': 'orginal_co2_avg'}, inplace=True)
+  #data.rename(columns={'co2_corrected_avg': 'orginal_co2_avg'}, inplace=True)
 
   return data
 
@@ -188,14 +240,16 @@ def generate_measurements(data):
 
 def generate_corrections():
   """Compiles all of the functions to retrive the data, generate corrections, and save data into a csv"""
-  pre_processed_data = clean_data(get_data())
   
-  pre_processed_data = pd.read_csv("/Users/liviagimenes/Documents/CS/Breath Providence/breathe-pvd/data/dummy.csv")
-  pre_processed_data['datetime'] = pd.to_datetime(pre_processed_data['datetime'])
+  pre_processed_data = clean_data(get_data(sensors_df))
   print(pre_processed_data.head())
 
   corrected_data = generate_measurements(pre_processed_data)
-  corrected_data.to_csv("new_corrected_avg.csv", encoding='utf-8', index=False)
+  directory = '/Users/liviagimenes/Documents/CS/Breath Providence/breathe-pvd/data'
+  file_name = 'corrected_avg.csv'
+
+  #Add supporting uncorrected data
+  corrected_data.to_csv(directory + '/' + file_name, index=False)
 
 
 if __name__ == "__main__":

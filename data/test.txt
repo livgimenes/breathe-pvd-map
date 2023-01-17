@@ -1,0 +1,12 @@
+http://128.32.208.8/node/250,251,252,253,254,255,256,257,258,259,260,261,262,263,264,265,266,267,268,269,270,271,272,274,276/measurements_all/zip/?name=Multiselect%20Download&interval=60&variables=&start=2023-01-04%2019:46:17&end=2023-01-11%2019:46:17&chart_type=measurement
+
+
+One of the working ones with names
+http://128.32.208.8/node/250/measurements_all/csv?name=Myron%20J.%20Francis%20Elementary&interval=60&variables=co2_corrected_avg&start=2022-09-01%2020:00:00&end=2023-01-11%2020:00:00&chart_type=measurement
+
+
+http://128.32.208.8/node/250/measurements_all/csv?name=Myron%20J.%20Francis%20Elementary&interval=60&variables=co2_corrected_avg, temp&start=2022-9-1%2000:00:00&end=2023-01-12%2000:00:00&char_type=measurement
+
+All of the data 
+http://128.32.208.8/node/250,251,252,253,254,255,256,257,258,259,260,261,262,263,264,265,266,267,268,269,270,271,272,274,276/measurements_all/zip?name=Multiselect%20Download&interval=60&variables=co2_corrected_avg&start=2022-09-01%2020:00:00&end=2023-01-11%2020:00:00&chart_type=measurement
+

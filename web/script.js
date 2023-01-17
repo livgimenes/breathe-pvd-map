@@ -2,6 +2,7 @@ const apiKey = 'pk.eyJ1IjoiYWxmcmVkMjAxNiIsImEiOiJja2RoMHkyd2wwdnZjMnJ0MTJwbnVme
 
 const mymap = L.map('map').setView([41.831391, -71.415804], 13);
 
+//TODO: Make this come with the json
 let date = '2022-12-15';
 let time = "5 AM"
 
@@ -55,6 +56,7 @@ const legendControl = new LegendControl();
 
 // Add the custom control to the map
 mymap.addControl(legendControl);
+
 
 fetch("./coords.json")
   .then(response => response.json())
