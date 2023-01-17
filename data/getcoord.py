@@ -10,12 +10,18 @@ CORRECTED = True
 #TODO: Figure out what's wrong with this date thing
 TARGET_DATE = '2022-12-15 05:00:00-08:00'
 
-sensor_data = pd.read_csv('/Users/liviagimenes/Documents/CS/Breath Providence/breathe-pvd/data/breathe_providence_sensors.csv', usecols=["Sensor ID", "Node ID", "Location","Latitude","Longitude"])
+directory = './data'
+file_name = 'breathe_providence_sensors.csv'
+file_path = os.path.join(directory, file_name)
+sensor_data = pd.read_csv(file_path,usecols=["Sensor ID", "Node ID", "Location","Latitude","Longitude"])
 
 #TODO: Add pulling non corrected data 
 
 if CORRECTED:
-    corrected_data = pd.read_csv("/Users/liviagimenes/Documents/CS/Breath Providence/breathe-pvd/data/corrected_avg.csv",usecols=["datetime","node_id","co2_corrected_avg_T_drift_applied"])
+    directory = './data'
+    file_name = 'corrected_avg.csv'
+    file_path = os.path.join(directory, file_name)
+    corrected_data = pd.read_csv(file_path,usecols=["datetime","node_id","co2_corrected_avg_T_drift_applied"])
     corrected_data = corrected_data.rename(columns={'co2_corrected_avg_T_drift_applied': 'co2_corrected'})
     corrected_data = corrected_data.loc[corrected_data['datetime'] == '2022-12-15 05:00:00-08:00']
     combined_data = pd.merge(corrected_data, sensor_data, left_on='node_id', right_on='Node ID', how="right")
