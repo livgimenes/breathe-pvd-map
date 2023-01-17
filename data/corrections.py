@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import datetime
 import utils
 import urllib
+import os
 
 from sklearn.linear_model import LinearRegression
 
@@ -21,6 +22,13 @@ ACTIVE_NODES = ["250","267","270","274","276","261","252","257","263"]
 
 #Open available nodes
 sensors_df = pd.read_csv("/Users/liviagimenes/Documents/CS/Breath Providence/breathe-pvd/data/breathe_providence_sensors.csv")
+
+directory = './data'
+file_name = 'breathe_providence_sensors.csv'
+file_path = os.path.join(directory, file_name)
+sensors_df = pd.read_csv(file_path)
+
+#TODO: Chekc out things about this at the end
 sensors_df = sensors_df[sensors_df["Node ID"].isin(ACTIVE_NODES)]
 sensors_list = sensors_df["Node ID"].tolist()
 
@@ -245,11 +253,12 @@ def generate_corrections():
   print(pre_processed_data.head())
 
   corrected_data = generate_measurements(pre_processed_data)
-  directory = '/Users/liviagimenes/Documents/CS/Breath Providence/breathe-pvd/data'
+  directory = './data'
   file_name = 'corrected_avg.csv'
 
-  #Add supporting uncorrected data
-  corrected_data.to_csv(directory + '/' + file_name, index=False)
+  # Add supporting uncorrected data
+  file_path = os.path.join(directory, file_name)
+  corrected_data.to_csv(file_path, index=False)
 
 
 if __name__ == "__main__":

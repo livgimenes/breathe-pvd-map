@@ -51,7 +51,7 @@ combined_data['Longitude'] = combined_data['Longitude'].apply(convert_longitude)
 
 print(combined_data)
 
-directory = "/Users/liviagimenes/Documents/CS/Breath Providence/breathe-pvd/web"
+directory = "./web"
 combined_data.to_json(os.path.join(directory, 'coords.json'), orient='records')
 
 
