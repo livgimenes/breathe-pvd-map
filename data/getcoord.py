@@ -5,7 +5,7 @@ import os
 from corrections import *
 
 
-CORRECTED = True
+CORRECTED = False
 
 #TODO: Figure out what's wrong with this date thing
 TARGET_DATE = '2022-12-15 05:00:00-08:00'
@@ -29,7 +29,7 @@ else:
     non_corrected_data = clean_data(get_data(sensor_data))
     non_corrected_data = non_corrected_data.rename(columns={'co2_corrected_avg': 'co2_corrected'})
     print(non_corrected_data)
-    non_corrected_data = non_corrected_data.loc[non_corrected_data['datetime']  == '2022-12-15 05:00:00']
+    non_corrected_data = non_corrected_data.loc[non_corrected_data['datetime']  == '2023-01-18 19:00:00']
     combined_data = pd.merge(non_corrected_data, sensor_data, left_on='node_id', right_on='Node ID', how="right")
 
 
