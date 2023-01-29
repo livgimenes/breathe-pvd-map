@@ -5,7 +5,7 @@ import os
 from corrections import *
 
 
-CORRECTED = False
+WEB_BASED = False
 
 #TODO: Figure out what's wrong with this date thing
 TARGET_DATE = '2022-12-15 05:00:00-08:00'
@@ -17,7 +17,7 @@ sensor_data = pd.read_csv(file_path,usecols=["Sensor ID", "Node ID", "Location",
 
 #TODO: Add pulling non corrected data 
 
-if CORRECTED:
+if WEB_BASED:
     directory = './data'
     file_name = 'corrected_avg.csv'
     file_path = os.path.join(directory, file_name)
@@ -26,6 +26,7 @@ if CORRECTED:
     corrected_data = corrected_data.loc[corrected_data['datetime'] == '2022-12-15 05:00:00-08:00']
     combined_data = pd.merge(corrected_data, sensor_data, left_on='node_id', right_on='Node ID', how="right")
 else:
+    #TODO: Rework this so it's faster
     non_corrected_data = clean_data(get_data(sensor_data))
     non_corrected_data = non_corrected_data.rename(columns={'co2_corrected_avg': 'co2_corrected'})
     print(non_corrected_data)
