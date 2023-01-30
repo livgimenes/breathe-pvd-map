@@ -30,7 +30,7 @@ else:
     non_corrected_data = clean_data(get_data(sensor_data))
     non_corrected_data = non_corrected_data.rename(columns={'co2_corrected_avg': 'co2_corrected'})
     print(non_corrected_data)
-    non_corrected_data = non_corrected_data.loc[non_corrected_data['datetime']  == '2023-01-18 19:00:00']
+    non_corrected_data = non_corrected_data.loc[non_corrected_data['datetime']  == '2023-01-30 05:00:00']
     combined_data = pd.merge(non_corrected_data, sensor_data, left_on='node_id', right_on='Node ID', how="right")
 
 
@@ -58,7 +58,7 @@ combined_data['Longitude'] = combined_data['Longitude'].apply(convert_longitude)
 
 print(combined_data)
 
-directory = "./web"
+directory = "./public"
 combined_data.to_json(os.path.join(directory, 'coords.json'), orient='records')
 
 
