@@ -3,7 +3,7 @@ const apiKey = 'pk.eyJ1IjoiYWxmcmVkMjAxNiIsImEiOiJja2RoMHkyd2wwdnZjMnJ0MTJwbnVme
 const mymap = L.map('map').setView([41.831391, -71.415804], 13);
 
 //TODO: Make this come with the json
-let date = '2023-01-18';
+let date = '2023-01-30';
 let time = "5 AM"
 
 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
