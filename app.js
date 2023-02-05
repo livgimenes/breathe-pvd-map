@@ -9,7 +9,7 @@ app.get('/', (req, res) => {
 });
 
 function runPythonScript() {
-  const pythonScript = spawn('python3', ['/path/to/your/python/script.py']);
+  const pythonScript = spawn('python3', ['data/getcoord.py']);
 
   pythonScript.stdout.on('data', (data) => {
     console.log(`stdout: ${data}`);
