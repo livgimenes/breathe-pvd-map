@@ -2,9 +2,19 @@ const apiKey = 'pk.eyJ1IjoiYWxmcmVkMjAxNiIsImEiOiJja2RoMHkyd2wwdnZjMnJ0MTJwbnVme
 
 const mymap = L.map('map').setView([41.831391, -71.415804], 13);
 
-//TODO: Make this come with the json
-let date = '2023-01-30';
-let time = "5 AM"
+//Change it so that it gets the datetime and that is the one displayed
+
+const date_obj = new Date();
+const currentYear = date_obj.getFullYear().toString();
+const currentMonth = (date_obj.getMonth() + 1).toString().padStart(2, '0');
+const currentDate = date_obj.getDate().toString().padStart(2, '0');
+const currentHour = date_obj.getHours().toString().padStart(2, '0');
+
+
+const date = currentYear + '-' + currentMonth + '-' + currentDate;
+const time = currentHour + ':00:00';
+
+
 
 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
     maxZoom: 18,

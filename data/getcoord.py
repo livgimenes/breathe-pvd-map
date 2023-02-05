@@ -2,41 +2,84 @@ import csv
 import json
 import pandas as pd
 import os
-from corrections import *
 
 
-WEB_BASED = False
+### ADDING THE DATA IN THE SAME FILE 
 
-#TODO: Figure out what's wrong with this date thing
-TARGET_DATE = '2022-12-15 05:00:00-08:00'
+import csv
+import json
+import pandas as pd
+import os
+from datetime import datetime
+from pytz import timezone
+import matplotlib.pyplot as plt
+import datetime
+import urllib
+import numpy as np
+import urllib.parse
 
-directory = './data'
-file_name = 'breathe_providence_sensors.csv'
-file_path = os.path.join(directory, file_name)
-sensor_data = pd.read_csv(file_path,usecols=["Sensor ID", "Node ID", "Location","Latitude","Longitude"])
+###PRE-CODING READING
 
-#TODO: Add pulling non corrected data 
+def get_requests(node_name, node_id, variable, start_date, start_time, end_date, end_time):
+    """Given a node_id, measure, start date and end date return the raw cvs files for that node """
 
-if WEB_BASED:
-    directory = './data'
-    file_name = 'corrected_avg.csv'
-    file_path = os.path.join(directory, file_name)
-    corrected_data = pd.read_csv(file_path,usecols=["datetime","node_id","co2_corrected_avg_T_drift_applied"])
-    corrected_data = corrected_data.rename(columns={'co2_corrected_avg_T_drift_applied': 'co2_corrected'})
-    corrected_data = corrected_data.loc[corrected_data['datetime'] == '2022-12-15 05:00:00-08:00']
-    combined_data = pd.merge(corrected_data, sensor_data, left_on='node_id', right_on='Node ID', how="right")
-else:
-    #TODO: Rework this so it's faster
-    non_corrected_data = clean_data(get_data(sensor_data))
-    non_corrected_data = non_corrected_data.rename(columns={'co2_corrected_avg': 'co2_corrected'})
-    print(non_corrected_data)
-    non_corrected_data = non_corrected_data.loc[non_corrected_data['datetime']  == '2023-01-30 05:00:00']
-    combined_data = pd.merge(non_corrected_data, sensor_data, left_on='node_id', right_on='Node ID', how="right")
+    base_url = "http://128.32.208.8"
 
 
-combined_data = combined_data.fillna(-999)
-print(combined_data)
-combined_data = combined_data.drop("node_id", axis='columns')
+    custom_url = ("/node/" + str(node_id)
+                  + "/measurements_all/csv?name=" + str(node_name) + "&interval=60&variables=" + variable + "&start=" +
+                  str(start_date) + "%20" + str(start_time) + "&end=" + str(end_date) + "%20" + str(end_time) + "&char_type=measurement")
+    
+
+    print(base_url + custom_url)
+    return base_url + custom_url
+
+def get_requests_for_row(row, start_date, end_date, variable, start_time, end_time):
+    """Helper for get_data. Gets requets for a given row, for a pre-defined start-date, end-date, pollution variant and time """
+
+    url = get_requests(urllib.parse.quote(row["Location"]), row["Node ID"], variable, start_date, start_time, end_date, end_time)
+    try:
+        data = pd.read_csv(url)
+    except:
+        data = pd.DataFrame()
+        print("This is the attempted url: " + url)
+        print(f"An error occurred while trying to fetch data from the server")
+    return data
+
+def get_data(data, start_date, end_date, variable, start_time, end_time):
+    """Loads all the measurements from the nodes and store them into a pandas dataframe. To modify specifics go to get_requests for row"""
+    all_data = data.apply(get_requests_for_row, axis=1, args=(start_date, end_date, variable, start_time,end_time))
+    return pd.concat(all_data.values)
+
+
+### DATA CLEANING 
+
+
+def pst_to_est(time):
+  """Takes in time represented as a string and returns, in the same format, the time converted into est. Returns a str,"""
+
+  #convert it to a time date module
+  if type(time) == str:
+    time = datetime.datetime.strptime(time,"%Y-%m-%d %H:%M:%S")
+
+  new_time = time.astimezone(timezone('US/Pacific'))
+  return new_time
+
+def clean_data(data):
+  """Cleans the panda dataframe removing missing data, drops unecessary columns and tranforms data from pst to est"""
+
+  #drop unecessary columns
+  print(data.columns)
+  data = data.drop(columns=['epoch', 'local_timestamp',"node_file_id"])
+
+  #remove missing data, -999
+  data = data.replace({'co2_corrected_avg': {-999.00000: np.NaN}})
+  data = data.dropna(subset=['datetime', 'co2_corrected_avg'])
+
+  #change time zones 
+  data['datetime'] = data['datetime'].map(lambda x: pst_to_est(x))
+
+  return data
 
 def convert_latitude(latitude):
     value, direction = latitude.split()
@@ -52,13 +95,59 @@ def convert_longitude(longitude):
         value = -value
     return value
 
-#Convert Latitute and Longitude
-combined_data['Latitude'] = combined_data['Latitude'].apply(convert_latitude)
-combined_data['Longitude'] = combined_data['Longitude'].apply(convert_longitude)
 
-print(combined_data)
+def convert_final():
+     
+    directory = './data'
+    file_name = 'breathe_providence_sensors.csv'
+    file_path = os.path.join(directory, file_name)
+    sensors_df = pd.read_csv(file_path,usecols=["Sensor ID","Node ID","Location","Latitude","Longitude"])
 
-directory = "./public"
-combined_data.to_json(os.path.join(directory, 'coords.json'), orient='records')
 
 
+    curr_time = pst_to_est(datetime.datetime.now())
+    print(curr_time)
+
+
+    end_date = str(curr_time)[0:10]
+    end_time = str(curr_time)[11:19] 
+
+    #change back to the time 
+
+    rounded_hour = curr_time.replace(minute=0, second=0, microsecond=0)
+    start_date = rounded_hour.date()
+    start_time = "00:00:00"
+    variable = "co2_corrected_avg,temp"
+
+
+    data = clean_data(get_data(sensors_df,start_date, end_date, variable, start_time, end_time))
+    data = data.rename(columns={'co2_corrected_avg': 'co2_corrected'})
+    data.sort_values(by='datetime', ascending=False, inplace=True)
+
+
+    #get the datetime for that value and then use tha column value to then get the desired times
+    print(data)
+
+    filter_data = data.iloc[0]["datetime"]
+
+    # filter to only have the data from now
+    hour_data = data[data["datetime"] == filter_data]
+
+
+    #maybe add these late
+    combined_data = pd.merge(hour_data, sensors_df, left_on='node_id', right_on='Node ID', how="right")
+
+
+    combined_data = combined_data.drop("node_id", axis='columns')
+    combined_data['Latitude'] = combined_data['Latitude'].apply(convert_latitude)
+    combined_data['Longitude'] = combined_data['Longitude'].apply(convert_longitude)
+
+    print(combined_data)
+
+    #filter to only include 
+
+    directory = "./public"
+    combined_data.to_json(os.path.join(directory, 'coords.json'), orient='records')
+
+
+convert_final()

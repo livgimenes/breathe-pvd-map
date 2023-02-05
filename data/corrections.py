@@ -20,20 +20,20 @@ from sklearn.linear_model import LinearRegression
 #Change this to only reflect active nodes
 ACTIVE_NODES = ["250","267","270","274","276","261","252","257","263"]
 
-#Open available nodes
-sensors_df = pd.read_csv("/Users/liviagimenes/Documents/CS/Breath Providence/breathe-pvd/data/breathe_providence_sensors.csv")
 
 directory = './data'
 file_name = 'breathe_providence_sensors.csv'
 file_path = os.path.join(directory, file_name)
 sensors_df = pd.read_csv(file_path)
 
-#TODO: Chekc out things about this at the end
+
+
+#You will need these for future readings
 sensors_df = sensors_df[sensors_df["Node ID"].isin(ACTIVE_NODES)]
 sensors_list = sensors_df["Node ID"].tolist()
 
-print(sensors_list)
 
+#TODO: Change these to be less specific and more generic
 def get_requests(node_name,node_id,variable,start_date,start_time,end_date,end_time):
   """Given a node_id, measure, start date and end date return the raw cvs files for that node """
 
