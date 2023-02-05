@@ -1,18 +1,11 @@
-import csv
-import json
-import pandas as pd
-import os
 
 
 ### ADDING THE DATA IN THE SAME FILE 
 
-import csv
-import json
 import pandas as pd
 import os
 from datetime import datetime
 from pytz import timezone
-import matplotlib.pyplot as plt
 import datetime
 import urllib
 import numpy as np
@@ -136,7 +129,7 @@ def convert_final():
 
     #maybe add these late
     combined_data = pd.merge(hour_data, sensors_df, left_on='node_id', right_on='Node ID', how="right")
-    combined_data = combined_data.fillna(-1, inplace=True)
+    combined_data.fillna(-1, inplace=True)
 
 
     combined_data = combined_data.drop("node_id", axis='columns')
