@@ -119,8 +119,6 @@ def convert_final():
     #get the datetime for that value and then use tha column value to then get the desired times
     print(data)
 
-
-    #filter_data = data.iloc[0]["datetime"]
     filter_data = str(rounded_time)
 
 
