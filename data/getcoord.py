@@ -122,6 +122,7 @@ def convert_final():
     print(data)
 
     filter_data = data.iloc[0]["datetime"]
+    
 
     # filter to only have the data from now
     hour_data = data[data["datetime"] == filter_data]
