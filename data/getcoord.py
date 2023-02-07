@@ -24,7 +24,6 @@ def get_requests(node_name, node_id, variable, start_date, start_time, end_date,
                   str(start_date) + "%20" + str(start_time) + "&end=" + str(end_date) + "%20" + str(end_time) + "&char_type=measurement")
     
 
-    print(base_url + custom_url)
     return base_url + custom_url
 
 def get_requests_for_row(row, start_date, end_date, variable, start_time, end_time):
@@ -35,8 +34,7 @@ def get_requests_for_row(row, start_date, end_date, variable, start_time, end_ti
         data = pd.read_csv(url)
     except:
         data = pd.DataFrame()
-        print("This is the attempted url: " + url)
-        print(f"An error occurred while trying to fetch data from the server")
+        print(f"An error occurred while trying to fetch data from the server for node " + str(row["Node ID"]) + " at " + row["Location"])
     return data
 
 def get_data(data, start_date, end_date, variable, start_time, end_time):
@@ -99,29 +97,35 @@ def convert_final():
 
 
     curr_time = pst_to_est(datetime.datetime.now())
-    print(curr_time)
-
 
     end_date = str(curr_time)[0:10]
     end_time = str(curr_time)[11:19] 
 
     #change back to the time 
 
-    rounded_hour = curr_time.replace(minute=0, second=0, microsecond=0)
-    start_date = rounded_hour.date()
+    rounded_time = curr_time.replace(minute=0, second=0, microsecond=0)
+    print("this is the rounded time" + str(rounded_time))
+    start_date = rounded_time.date()
     start_time = "00:00:00"
     variable = "co2_corrected_avg,temp"
 
 
     data = clean_data(get_data(sensors_df,start_date, end_date, variable, start_time, end_time))
     data = data.rename(columns={'co2_corrected_avg': 'co2_corrected'})
+    #TODO: Take out
     data.sort_values(by='datetime', ascending=False, inplace=True)
 
 
     #get the datetime for that value and then use tha column value to then get the desired times
     print(data)
 
-    filter_data = data.iloc[0]["datetime"]
+
+    #filter_data = data.iloc[0]["datetime"]
+    filter_data = str(rounded_time)
+
+
+    #it has to be the rounded hour
+    print(filter_data)
     
 
     # filter to only have the data from now
