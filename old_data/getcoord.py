@@ -23,7 +23,7 @@ def get_requests(node_name, node_id, variable, start_date, start_time, end_date,
                   + "/measurements_all/csv?name=" + str(node_name) + "&interval=60&variables=" + variable + "&start=" +
                   str(start_date) + "%20" + str(start_time) + "&end=" + str(end_date) + "%20" + str(end_time) + "&char_type=measurement")
     
-
+    print(base_url + custom_url)
     return base_url + custom_url
 
 def get_requests_for_row(row, start_date, end_date, variable, start_time, end_time):
@@ -89,7 +89,7 @@ def convert_longitude(longitude):
 
 def convert_final():
      
-    directory = './data'
+    directory = './old_data'
     file_name = 'breathe_providence_sensors.csv'
     file_path = os.path.join(directory, file_name)
     sensors_df = pd.read_csv(file_path,usecols=["Sensor ID","Node ID","Location","Latitude","Longitude"])

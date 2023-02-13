@@ -24,7 +24,6 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
     accessToken: apiKey
 }).addTo(mymap);
 
-
 class LegendControl extends L.Control {
   // Define the onAdd method
   onAdd() {
@@ -47,17 +46,12 @@ class LegendControl extends L.Control {
           <br>
           <b>Legend</b>
           <br>
-          <div style="display:inline-block; width: 15px; height: 15px; background-color: grey;"></div> Not Available
+          <div style="height: 20px;">600 ppm </div>
+          <div style="display:inline-block; width: 20px; height: 120px; background: linear-gradient(to bottom, #001F66, #0036B1, #004EFF,#3371FF, #6694FF, #99B8FF, #DBE6FF, #E5EDFF);"></div>
           <br>
-          <div style="display:inline-block; width: 15px; height: 15px; background-color: green;"></div> < 400 ppm
-          <br>
-          <div style="display:inline-block; width: 15px; height: 15px; background-color: gold;"></div> 400-500 ppm 
-          <br>
-          <div style="display:inline-block; width: 15px; height: 15px; background-color: darkorange;"></div> 500-650 ppm
-          <br>
-          <div style="display:inline-block; width: 15px; height: 15px; background-color: red;"></div> > 650 ppm
-      </div>
-  `;
+          <div style="height: 20px;">400 ppm </div>
+          </div>
+      </div>`;
       return div;
   }
 }
@@ -67,6 +61,28 @@ const legendControl = new LegendControl();
 // Add the custom control to the map
 mymap.addControl(legendControl);
 
+// Define a function to calculate the color based on the value
+function getColor(value) {
+  if (value >= 400 && value < 425) {
+    return "#E5EDFF";
+  } else if (value >= 425 && value < 450){
+    return "#DBE6FF";
+  }else if (value >= 450 && value < 475) {
+    return "#99B8FF";
+  } else if (value >= 475 && value < 500) {
+    return "#6694FF";
+  } else if (value >= 500 && value < 525) {
+    return "#3371FF";
+  } else if (value >= 525 && value < 550) {
+    return "#004EFF";
+  } else if (value >= 550 && value < 575) {
+    return "#0036B1";
+  } else if (value >= 575 && value <= 600) {
+    return "#001F66";
+  } else {
+    return "#808080";
+  }
+}
 
 fetch("./coords.json")
   .then(response => response.json())
@@ -74,18 +90,7 @@ fetch("./coords.json")
     for (let i = 0; i < coordinates.length; i++) {
         const lat = coordinates[i]["Latitude"];
         const lon = coordinates[i]["Longitude"];
-        let color = "";
-        if (coordinates[i]["co2_corrected"] <= 400 && coordinates[i]["co2_corrected"] > 0) {
-            color = 'green';
-        } else if (coordinates[i]["co2_corrected"] <= 500 && coordinates[i]["co2_corrected"] > 400) {
-            color = 'gold';
-        } else if (coordinates[i]["co2_corrected"] <= 650 && coordinates[i]["co2_corrected"] > 500) {
-            color = 'darkorange';
-        } else if (coordinates[i]["co2_corrected"] > 650){
-            color = 'red';
-        }else{
-          color = 'grey';
-        }
+        let color = getColor(coordinates[i]["co2_corrected"])
 
       let circleMarker = L.circleMarker([lat, lon], {
         radius: 8,
