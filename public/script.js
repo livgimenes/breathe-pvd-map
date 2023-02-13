@@ -94,7 +94,7 @@ fetch("./coords.json")
 
       let circleMarker = L.circleMarker([lat, lon], {
         radius: 8,
-        color: 'white',
+        color: 'black',
         weight: 1,
         fillColor: color,
         fillOpacity: 0.8
