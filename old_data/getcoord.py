@@ -67,6 +67,9 @@ def clean_data(data):
   data = data.replace({'co2_corrected_avg': {-999.00000: np.NaN}})
   data = data.dropna(subset=['datetime', 'co2_corrected_avg'])
 
+  #round to no decimals
+  data['co2_corrected_avg'] = data['co2_corrected_avg'].map(lambda x: round(x))
+
   #change time zones 
   data['datetime'] = data['datetime'].map(lambda x: pst_to_est(x))
 

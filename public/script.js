@@ -47,7 +47,7 @@ class LegendControl extends L.Control {
           <b>Legend</b>
           <br>
           <div style="height: 20px;">600 ppm </div>
-          <div style="display:inline-block; width: 20px; height: 120px; background: linear-gradient(to bottom, #001F66, #0036B1, #004EFF,#3371FF, #6694FF, #99B8FF, #DBE6FF, #E5EDFF);"></div>
+          <div style="display:inline-block; width: 20px; height: 120px; background: linear-gradient(to bottom, rgb(0, 31, 102), rgb(39, 74, 146), rgb(77, 117, 190), rgb(115, 160, 234), rgb(153, 187, 244), rgb(191, 213, 253), rgb(214, 226, 255), rgb(229, 237, 255));;"></div>
           <br>
           <div style="height: 20px;">400 ppm </div>
           </div>
@@ -62,26 +62,23 @@ const legendControl = new LegendControl();
 mymap.addControl(legendControl);
 
 // Define a function to calculate the color based on the value
-function getColor(value) {
-  if (value >= 400 && value < 425) {
-    return "#E5EDFF";
-  } else if (value >= 425 && value < 450){
-    return "#DBE6FF";
-  }else if (value >= 450 && value < 475) {
-    return "#99B8FF";
-  } else if (value >= 475 && value < 500) {
-    return "#6694FF";
-  } else if (value >= 500 && value < 525) {
-    return "#3371FF";
-  } else if (value >= 525 && value < 550) {
-    return "#004EFF";
-  } else if (value >= 550 && value < 575) {
-    return "#0036B1";
-  } else if (value >= 575 && value <= 600) {
-    return "#001F66";
-  } else {
-    return "#808080";
-  }
+function getColor(co2Value) {
+  // Define the two RGB colors to interpolate between
+  const color1 = [0, 31, 102];  // dark blue
+  const color2 = [229, 237, 255];  // light blue
+
+  // Calculate the percentage of the CO2 value between 400 and 600
+  const percent = 1 - (co2Value - 400) / 200;
+
+  // Interpolate between the two colors based on the percentage
+  const color = [
+    Math.round(color1[0] + (color2[0] - color1[0]) * percent),
+    Math.round(color1[1] + (color2[1] - color1[1]) * percent),
+    Math.round(color1[2] + (color2[2] - color1[2]) * percent)
+  ];
+
+  // Convert the RGB color to a CSS color string and return it
+  return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
 }
 
 fetch("./coords.json")
