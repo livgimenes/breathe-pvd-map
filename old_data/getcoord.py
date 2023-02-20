@@ -8,7 +8,6 @@ from datetime import datetime
 from pytz import timezone
 import datetime
 import urllib
-import numpy as np
 import urllib.parse
 
 ###PRE-CODING READING
@@ -64,7 +63,7 @@ def clean_data(data):
   data = data.drop(columns=['epoch', 'local_timestamp',"node_file_id"])
 
   #remove missing data, -999
-  data = data.replace({'co2_corrected_avg_t_drift_applied': {-999.00000: np.NaN}})
+  data = data.replace({'co2_corrected_avg_t_drift_applied': {-999.00000: pd.NaT}})
   data = data.dropna(subset=['datetime', 'co2_corrected_avg_t_drift_applied'])
 
   #round to no decimals
