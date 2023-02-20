@@ -24,7 +24,7 @@ function runPythonScript() {
   });
 }
 
-setInterval(runPythonScript, 60 * 60 * 1000);
+setInterval(runPythonScript,60 * 1000);
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {

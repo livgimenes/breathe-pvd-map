@@ -60,15 +60,15 @@ def clean_data(data):
   """Cleans the panda dataframe removing missing data, drops unecessary columns and tranforms data from pst to est"""
 
   #drop unecessary columns
-  print(data.columns)
+  print(data.head(5))
   data = data.drop(columns=['epoch', 'local_timestamp',"node_file_id"])
 
   #remove missing data, -999
-  data = data.replace({'co2_corrected_avg': {-999.00000: np.NaN}})
-  data = data.dropna(subset=['datetime', 'co2_corrected_avg'])
+  data = data.replace({'co2_corrected_avg_t_drift_applied': {-999.00000: np.NaN}})
+  data = data.dropna(subset=['datetime', 'co2_corrected_avg_t_drift_applied'])
 
   #round to no decimals
-  data['co2_corrected_avg'] = data['co2_corrected_avg'].map(lambda x: round(x))
+  data['co2_corrected_avg_t_drift_applied'] = data['co2_corrected_avg_t_drift_applied'].map(lambda x: round(x))
 
   #change time zones 
   data['datetime'] = data['datetime'].map(lambda x: pst_to_est(x))
@@ -88,6 +88,7 @@ def convert_longitude(longitude):
     if direction == 'W':
         value = -value
     return value
+
 
 
 def convert_final():
@@ -110,11 +111,12 @@ def convert_final():
     print("this is the rounded time" + str(rounded_time))
     start_date = rounded_time.date()
     start_time = "00:00:00"
-    variable = "co2_corrected_avg,temp"
+    #CO2_corrected_avg_t_drift_applied
+    variable = "co2_corrected_avg_t_drift_applied,temp"
 
 
     data = clean_data(get_data(sensors_df,start_date, end_date, variable, start_time, end_time))
-    data = data.rename(columns={'co2_corrected_avg': 'co2_corrected'})
+    data = data.rename(columns={'co2_corrected_avg_t_drift_applied': 'co2_corrected'})
     #TODO: Take out
     data.sort_values(by='datetime', ascending=False, inplace=True)
 
