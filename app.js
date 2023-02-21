@@ -12,6 +12,7 @@ function runPythonScript() {
   const pythonScript = spawn('python3', ['old_data/getcoord.py']);
 
   pythonScript.stdout.on('data', (data) => {
+    console.log('Refreshing process started')
     console.log(`stdout: ${data}`);
   });
 
@@ -24,7 +25,16 @@ function runPythonScript() {
   });
 }
 
-setInterval(runPythonScript, 60 * 60 * 1000);
+function scheduleScript() {
+  var now = new Date();
+  var delay = 60 * 60 * 1000 - (now.getMinutes() * 60 + now.getSeconds()) * 1000 + now.getMilliseconds();
+  setTimeout(function() {
+    runPythonScript();
+    setInterval(runPythonScript, 60 * 60 * 1000);
+  }, delay);
+}
+
+scheduleScript();
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
