@@ -81,7 +81,7 @@ function getColor(co2Value) {
   return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
 }
 
-fetch("./coords.json")
+fetch("coordinates")
   .then(response => response.json())
   .then(coordinates => {
     for (let i = 0; i < coordinates.length; i++) {

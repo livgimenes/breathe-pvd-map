@@ -1,18 +1,22 @@
 const express = require('express');
 const { spawn } = require('child_process');
+const path = require('path');
 const app = express();
 
-app.use(express.static(__dirname + '/public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/public/display.html');
+  res.sendFile(path.join(__dirname, 'public', 'display.html'));
 });
+
+let coordinates = [];
 
 function runPythonScript() {
   const pythonScript = spawn('python3', ['old_data/getcoord.py']);
 
   pythonScript.stdout.on('data', (data) => {
-    console.log('Refreshing process started')
+    console.log('Refreshing process started');
+    coordinates = JSON.parse(data);
     console.log(`stdout: ${data}`);
   });
 
@@ -25,9 +29,11 @@ function runPythonScript() {
   });
 }
 
-
 setInterval(runPythonScript, 60 * 1000);
 
+app.get('/coordinates', (req, res) => {
+  res.json(coordinates);
+});
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
