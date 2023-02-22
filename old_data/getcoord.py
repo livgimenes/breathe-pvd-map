@@ -36,7 +36,7 @@ def get_requests_for_row(row, start_date, end_date, variable, start_time, end_ti
         data = pd.read_csv(url)
     except:
         data = pd.DataFrame()
-        #print(f"An error occurred while trying to fetch data from the server for node " + str(row["Node ID"]) + " at " + row["Location"])
+        print(f"An error occurred while trying to fetch data from the server for node " + str(row["Node ID"]) + " at " + row["Location"])
     return data
 
 
@@ -119,7 +119,7 @@ def convert_final():
     #change back to the time 
 
     rounded_time = curr_time.replace(minute=0, second=0, microsecond=0)
-    #print("this is the rounded time: " + str(rounded_time))
+    print("this is the rounded time: " + str(rounded_time))
     start_date = rounded_time.date()
     start_time = "00:00:00"
     #CO2_corrected_avg_t_drift_applied
@@ -131,19 +131,20 @@ def convert_final():
 
 
     data = data.rename(columns={'co2_corrected_avg_t_drift_applied': 'co2_corrected'})
+    #TODO: Take out
     data.sort_values(by='datetime', ascending=False, inplace=True)
 
 
     #get the datetime for that value and then use tha column value to then get the desired times
-    #print(data)
+    print(data)
 
     filter_data = str(rounded_time)
 
 
 
-    #print("this is the rounded time" + str(rounded_time))
+    print("this is the rounded time" + str(rounded_time))
     #it has to be the rounded hour
-    #print(filter_data)
+    print(filter_data)
     
 
     # filter to only have the data from now
@@ -159,11 +160,15 @@ def convert_final():
     combined_data['Latitude'] = combined_data['Latitude'].apply(convert_latitude)
     combined_data['Longitude'] = combined_data['Longitude'].apply(convert_longitude)
 
-    #print(combined_data)
+    print(combined_data)
+
+    #filter to only include 
 
 
-    #changing it to just output this
-    return combined_data.to_json()
+    #have it continously add to a csv file to see what has been displaying
+
+    directory = "./public"
+    combined_data.to_json(os.path.join(directory, 'coords.json'), orient='records')
 
 
-print(convert_final())
+convert_final()
