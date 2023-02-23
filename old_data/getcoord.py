@@ -37,6 +37,7 @@ def get_requests_for_row(row, start_date, end_date, variable, start_time, end_ti
     except:
         data = pd.DataFrame()
         print(f"An error occurred while trying to fetch data from the server for node " + str(row["Node ID"]) + " at " + row["Location"])
+        print("This is the url: " + url)
     return data
 
 
@@ -52,7 +53,10 @@ def store_failed_requests(failed_requests):
 def get_data(data, start_date, end_date, variable, start_time, end_time):
     """Loads all the measurements from the nodes and store them into a pandas dataframe. To modify specifics go to get_requests for row"""
     all_data = data.apply(get_requests_for_row, axis=1, args=(start_date, end_date, variable, start_time,end_time))
-    return pd.concat(all_data.values)
+    combined = pd.concat(all_data.values)
+    #how can i get all of the values for 'co2_corrected_avg_t_drift_applied' and print them as list
+    print(combined['co2_corrected_avg_t_drift_applied'].tolist())
+    return combined
 
 
 ### DATA CLEANING 
