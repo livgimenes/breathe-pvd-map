@@ -152,8 +152,7 @@ def convert_final():
     
 
     # filter to only have the data from now
-    hour_data = data
-    #[data["datetime"] == filter_data]
+    hour_data = data[data["datetime"] == filter_data]
 
 
     #maybe add these late

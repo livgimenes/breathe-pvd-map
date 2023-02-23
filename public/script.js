@@ -81,6 +81,9 @@ function getColor(co2Value) {
   return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
 }
 
+//filter to only include the current date and time
+
+
 fetch("./coords.json")
   .then(response => response.json())
   .then(coordinates => {
