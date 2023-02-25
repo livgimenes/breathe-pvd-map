@@ -135,11 +135,13 @@ def convert_final():
 
 
     data = data.rename(columns={'co2_corrected_avg_t_drift_applied': 'co2_corrected'})
-    #TODO: Take out
     data.sort_values(by='datetime', ascending=False, inplace=True)
 
+    #if statement, if the any of columns are null, print the data base
+    if data.isnull().values.any():
+        print("There is a null value in the data base")
 
-    #get the datetime for that value and then use tha column value to then get the desired times
+
     print(data)
 
     filter_data = str(rounded_time)

@@ -8,6 +8,9 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/display.html');
 });
 
+
+var count = 0;
+
 function runPythonScript() {
   const pythonScript = spawn('python3', ['old_data/getcoord.py']);
 
@@ -27,7 +30,8 @@ function runPythonScript() {
 
 
 setInterval(runPythonScript, 2 * 60 * 1000);
-
+count++;
+console.log("Code ran", count, "times");
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
