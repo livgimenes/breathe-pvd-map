@@ -29,7 +29,7 @@ function runPythonScript() {
 }
 
 
-setInterval(runPythonScript, 2 * 60 * 1000);
+setInterval(runPythonScript, 5 * 60 * 1000);
 count++;
 console.log("Code ran", count, "times");
 
