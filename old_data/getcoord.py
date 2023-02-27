@@ -160,6 +160,7 @@ def convert_final():
 
     #maybe add these late
     combined_data = pd.merge(hour_data, sensors_df, left_on='node_id', right_on='Node ID', how="right")
+    print("this is the combined data post merging", combined_data)
     combined_data.fillna(-1, inplace=True)
 
 
