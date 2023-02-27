@@ -88,6 +88,9 @@ def clean_data(data):
   #change time zones 
   data['datetime'] = data['datetime'].map(lambda x: pst_to_est(x))
 
+  print ("this is the columns in data", data.columns)
+  print("This is the post cleaning data", data)
+
   return data
 
 def convert_latitude(latitude):
@@ -133,22 +136,20 @@ def convert_final():
     data = clean_data(get_data(sensors_df,start_date, end_date, variable, start_time, end_time))
 
 
-
     data = data.rename(columns={'co2_corrected_avg_t_drift_applied': 'co2_corrected'})
     data.sort_values(by='datetime', ascending=False, inplace=True)
+
+    print("This is the renamed file ", data)
 
     #if statement, if the any of columns are null, print the data base
     if data.isnull().values.any():
         print("There is a null value in the data base")
 
 
-    print(data)
-
     filter_data = str(rounded_time)
 
 
-
-    print("this is the rounded time" + str(rounded_time))
+    print("this is the rounded time: " + str(rounded_time))
     #it has to be the rounded hour
     print(filter_data)
     
