@@ -142,11 +142,7 @@ def convert_final():
     print("This is the renamed file ", data)
 
     #if statement, if the any of columns are null, print the data base
-    if data.isnull().values.any():
-        print("There is a null value in the data base")
-
-
-    filter_data = str(rounded_time)
+    
 
 
     print("this is the rounded time: " + str(rounded_time))
@@ -155,16 +151,9 @@ def convert_final():
     print("Date list", list(data.columns.values))
 
 
-    
-
-    # filter to only have the data from now
-    hour_data = data[data["datetime"] == filter_data]
-
-    print("this is the filtered data", hour_data)
-
 
     #maybe add these late
-    combined_data = pd.merge(hour_data, sensors_df, left_on='node_id', right_on='Node ID', how="right")
+    combined_data = pd.merge(data, sensors_df, left_on='node_id', right_on='Node ID', how="right")
     print("this is the combined data post merging", combined_data)
     combined_data.fillna(-1, inplace=True)
 
