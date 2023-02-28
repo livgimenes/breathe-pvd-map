@@ -17,7 +17,7 @@ var time = currentHour + ':00:00';
 //Variable later used for filtering
 var CurrentDate = date + " " + time;
 
-console.log(date + " " + time + " ");
+console.log(CurrentDate);
 
 
 
