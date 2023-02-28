@@ -2,7 +2,6 @@ const apiKey = 'pk.eyJ1IjoiYWxmcmVkMjAxNiIsImEiOiJja2RoMHkyd2wwdnZjMnJ0MTJwbnVme
 
 const mymap = L.map('map').setView([41.831391, -71.415804], 13);
 
-//Change it so that it gets the datetime and that is the one displayed
 
 const date_obj = new Date();
 const currentYear = date_obj.getFullYear().toString();
@@ -11,8 +10,15 @@ const currentDate = date_obj.getDate().toString().padStart(2, '0');
 const currentHour = date_obj.getHours().toString().padStart(2, '0');
 
 
-const date = currentYear + '-' + currentMonth + '-' + currentDate;
-const time = currentHour + ':00:00';
+var date = currentYear + '-' + currentMonth + '-' + currentDate;
+var time = currentHour + ':00:00';
+
+
+//Variable later used for filtering
+var CurrentDate = date + " " + time;
+
+console.log(date + " " + time + " ");
+
 
 
 
@@ -90,7 +96,15 @@ fetch("./coords.json")
     for (let i = 0; i < coordinates.length; i++) {
         const lat = coordinates[i]["Latitude"];
         const lon = coordinates[i]["Longitude"];
-        let color = getColor(coordinates[i]["co2_corrected"])
+        let color = getColor(coordinates[i]["co2_corrected"]);
+
+        const date = coordinates[i]["datetime"];
+        if (date != CurrentDate) {
+          console.log("skipped");
+          continue; // Skip this coordinate and move on to the next one
+        }
+
+
 
       let circleMarker = L.circleMarker([lat, lon], {
         radius: 8,
@@ -101,9 +115,9 @@ fetch("./coords.json")
     });
       
       if(coordinates[i]["co2_corrected"] == -1){
-        circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO2 Level: Not Available");
+        circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO2 Level: Not Available" + "<br>" + " at the time " + date);
       }else{
-        circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO2 Level: " + coordinates[i]["co2_corrected"] + " (ppm)");
+        circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO2 Level: " + coordinates[i]["co2_corrected"] + " (ppm) " + "<br>" + " at the time " + date);
       }
       circleMarker.addTo(mymap);
         

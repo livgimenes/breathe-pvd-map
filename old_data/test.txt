@@ -10,3 +10,36 @@ http://128.32.208.8/node/250/measurements_all/csv?name=Myron%20J.%20Francis%20El
 All of the data 
 http://128.32.208.8/node/250,251,252,253,254,255,256,257,258,259,260,261,262,263,264,265,266,267,268,269,270,271,272,274,276/measurements_all/zip?name=Multiselect%20Download&interval=60&variables=co2_corrected_avg&start=2022-09-01%2020:00:00&end=2023-01-11%2020:00:00&chart_type=measurement
 
+fetch("./coords.json")
+  .then(response => response.json())
+  .then(coordinates => {
+    const currentDate = new Date(); // Get the current date
+    for (let i = 0; i < coordinates.length; i++) {
+        const lat = coordinates[i]["Latitude"];
+        const lon = coordinates[i]["Longitude"];
+        let color = getColor(coordinates[i]["co2_corrected"]);
+
+        // Check if the datetime of the current coordinate matches the current date
+        const currentDateTime = new Date(coordinates[i]["datetime"].replace(" ", "T") + "Z");
+        if (currentDateTime.getDate() !== currentDate.getDate() ||
+            currentDateTime.getMonth() !== currentDate.getMonth() ||
+            currentDateTime.getFullYear() !== currentDate.getFullYear()) {
+          continue; // Skip this coordinate and move on to the next one
+        }
+
+        let circleMarker = L.circleMarker([lat, lon], {
+          radius: 8,
+          color: 'black',
+          weight: 1,
+          fillColor: color,
+          fillOpacity: 0.8
+        });
+
+        if (coordinates[i]["co2_corrected"] == -1) {
+          circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO2 Level: Not Available");
+        } else {
+          circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO2 Level: " + coordinates[i]["co2_corrected"] + " (ppm)");
+        }
+        circleMarker.addTo(mymap);
+    }
+  });

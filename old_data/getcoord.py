@@ -88,8 +88,8 @@ def clean_data(data):
   #change time zones 
   data['datetime'] = data['datetime'].map(lambda x: pst_to_est(x))
 
-  print ("this is the columns in data", data.columns)
-  print("This is the post cleaning data", data)
+  #make the datetime be a string and not include -08:00
+  data['datetime'] = data['datetime'].map(lambda x: str(x)[0:19])
 
   return data
 
