@@ -151,13 +151,16 @@ def convert_final():
 
     print("this is the rounded time: " + str(rounded_time))
     #it has to be the rounded hour
-    print("this is the filtered data", filter_data)
+
+    print("Date list", list(data.columns.values))
+
+
     
 
     # filter to only have the data from now
     hour_data = data[data["datetime"] == filter_data]
 
-    print(hour_data)
+    print("this is the filtered data", hour_data)
 
 
     #maybe add these late
