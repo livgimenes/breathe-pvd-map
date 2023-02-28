@@ -98,12 +98,12 @@ fetch("./coords.json")
         const lon = coordinates[i]["Longitude"];
         let color = getColor(coordinates[i]["co2_corrected"]);
 
-        const date = coordinates[i]["datetime"];
-        if (date != CurrentDate) {
-          console.log("skipped");
+      console.log(coordinates[i]["datetime"])
+      console.log(CurrentDate)
+      const date = coordinates[i]["datetime"];
+      if (date != CurrentDate) {
           continue; // Skip this coordinate and move on to the next one
         }
-
 
 
       let circleMarker = L.circleMarker([lat, lon], {
