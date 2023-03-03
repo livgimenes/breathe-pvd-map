@@ -73,6 +73,9 @@ function getColor(co2Value) {
   const color1 = [0, 31, 102];  // dark blue
   const color2 = [229, 237, 255];  // light blue
 
+  if(co2Value == -1) {
+    return `#DCDCDC`};
+
   // Calculate the percentage of the CO2 value between 400 and 600
   const percent = 1 - (co2Value - 400) / 200;
 
@@ -102,7 +105,7 @@ fetch("./coords.json")
       console.log(CurrentDate)
       const date = coordinates[i]["datetime"];
      
-      
+
 
 
       let circleMarker = L.circleMarker([lat, lon], {

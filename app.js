@@ -9,14 +9,14 @@ app.get('/', (req, res) => {
 });
 
 
-var count = 0;
-
 function runPythonScript() {
   const pythonScript = spawn('python3', ['old_data/getcoord.py']);
 
   pythonScript.stdout.on('data', (data) => {
     console.log('Refreshing process started')
-    console.log(`stdout: ${data}`);
+    const jsonData = JSON.parse(data);
+    console.log(jsonData);
+    //console.log(`stdout: ${data}`);
   });
 
   pythonScript.stderr.on('data', (data) => {

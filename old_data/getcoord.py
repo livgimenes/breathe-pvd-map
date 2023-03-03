@@ -10,6 +10,8 @@ import datetime
 import urllib
 import urllib.parse
 import numpy as np 
+import requests
+import json
 
 ###PRE-CODING READING
 
@@ -170,7 +172,24 @@ def convert_final():
     #have it continously add to a csv file to see what has been displaying
 
     directory = "./public"
+    print_comb = combined_data.to_csv()
+    print("this is the print comb", print_comb)
+
+    #comment this out if it works 
     combined_data.to_json(os.path.join(directory, 'coords.json'), orient='records')
 
+    return print_comb
 
-convert_final()
+
+####### FINAL API END-POINT
+
+final_data = convert_final()
+# url = 'http://localhost:3000/api/data'
+# headers = {'Content-type': 'application/json'}
+# response = requests.post(url, data=json.dumps(final_data), headers=headers)
+
+# print(response.status_code)
+
+
+
+
