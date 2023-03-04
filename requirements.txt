@@ -1,4 +1,3 @@
 pandas
 pytz
 numpy
-requests
