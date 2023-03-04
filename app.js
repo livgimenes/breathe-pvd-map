@@ -14,9 +14,9 @@ function runPythonScript() {
 
   pythonScript.stdout.on('data', (data) => {
     console.log('Refreshing process started')
-    const jsonData = JSON.parse(data);
-    console.log(jsonData);
-    //console.log(`stdout: ${data}`);
+    // const jsonData = JSON.parse(data);
+    //console.log(jsonData);
+    console.log(`stdout: ${data}`);
   });
 
   pythonScript.stderr.on('data', (data) => {
