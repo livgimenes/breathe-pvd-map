@@ -30,7 +30,7 @@ function runPythonScript() {
 
 
 setInterval(runPythonScript, 60 * 60 * 1000);
-console.log("Code ran", count, "times");
+
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
