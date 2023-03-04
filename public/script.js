@@ -105,7 +105,7 @@ fetch("./coords.json")
       console.log(CurrentDate)
       const date = coordinates[i]["datetime"];
      
-
+      
 
 
       let circleMarker = L.circleMarker([lat, lon], {
