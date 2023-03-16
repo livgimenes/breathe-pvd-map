@@ -14,8 +14,6 @@ function runPythonScript() {
 
   pythonScript.stdout.on('data', (data) => {
     console.log('Refreshing process started')
-    // const jsonData = JSON.parse(data);
-    //console.log(jsonData);
     console.log(`stdout: ${data}`);
   });
 
@@ -29,7 +27,7 @@ function runPythonScript() {
 }
 
 
-setInterval(runPythonScript, 5 * 60 * 1000);
+setInterval(runPythonScript, 60 * 60 * 1000);
 
 
 const port = process.env.PORT || 3000;

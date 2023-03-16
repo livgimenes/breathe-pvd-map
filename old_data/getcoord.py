@@ -172,8 +172,8 @@ def convert_final():
     #have it continously add to a csv file to see what has been displaying
 
     directory = "./public"
-    print_comb = combined_data.to_csv()
-    print("this is the print comb", print_comb)
+    print_comb = combined_data.to_json(orient='records')
+    
 
     #comment this out if it works 
     combined_data.to_json(os.path.join(directory, 'coords.json'), orient='records')
@@ -183,12 +183,16 @@ def convert_final():
 
 ####### FINAL API END-POINT
 
+
+# ### File is correct 
 final_data = convert_final()
+# print(final_data)
 # url = 'http://localhost:3000/api/data'
 # headers = {'Content-type': 'application/json'}
 # response = requests.post(url, data=json.dumps(final_data), headers=headers)
-
 # print(response.status_code)
+
+
 
 
 

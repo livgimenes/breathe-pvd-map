@@ -39,8 +39,8 @@ class LegendControl extends L.Control {
       div.style.borderRadius = "6px";
       div.style.width = "max-content";
       div.style.position = "absolute";
-      div.style.right = "6px";
-      div.style.top = "6px";
+      div.style.right = "650px";
+      div.style.top = "520px";
       div.style.fontSize = "14px";
       div.innerHTML =  `
       <div>
@@ -93,7 +93,7 @@ function getColor(co2Value) {
 //filter to only include the current date and time
 
 
-fetch("./coords.json")
+fetch("coords.json")
   .then(response => response.json())
   .then(coordinates => {
     for (let i = 0; i < coordinates.length; i++) {
