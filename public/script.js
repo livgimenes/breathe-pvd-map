@@ -124,3 +124,31 @@ fetch("coords.json")
     }
   });
 
+// Create and add the sidebar
+function addSidebar() {
+  const sidebar = document.createElement('div');
+  sidebar.id = 'sidebar';
+  sidebar.innerHTML = `
+    <h2>CO2 Levels</h2>
+    <p>Select a location to view its CO2 level.</p>
+  `;
+
+    // Add styling to the sidebar
+  sidebar.style.position = 'absolute';
+  sidebar.style.top = '0';
+  sidebar.style.right = '0';
+  sidebar.style.width = '20%';
+  sidebar.style.height = '100%';
+  sidebar.style.backgroundColor = 'white';
+  sidebar.style.zIndex = '999';
+  sidebar.style.padding = '1rem';
+  sidebar.style.overflowY = 'scroll';
+  
+  document.body.appendChild(sidebar);
+}
+
+// Add a click event listener to the map
+mymap.on('click', function(e) {
+  // Display the sidebar
+  addSidebar();
+});

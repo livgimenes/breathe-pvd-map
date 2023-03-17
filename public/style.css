@@ -1,0 +1,22 @@
+/* Change to add be better styled */
+
+
+#map-container {
+    position: relative;
+  }
+  
+  #map {
+    height: 400px; /* Replace with your desired map height */
+  }
+  
+  #sidebar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 300px; /* Replace with your desired sidebar width */
+    height: 100%;
+    background-color: red; /* Replace with your desired sidebar background color */
+    z-index: 999;
+    display: none;
+  }
+  
