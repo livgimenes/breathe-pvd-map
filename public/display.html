@@ -10,9 +10,50 @@
     <div id="mapsuper">
         <div id="map"> 
             <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-            <div id="sidebar"></div>
+            <div id="sidebar">
+        
+                <div id="button-container">
+                    <button id="close-button"></button>
+                </div>
+
+                <p id="NetworkName"> Breathe Providence</p>
+
+                <h2 id="monitorName" class="NodeTitle"> </h2>
+                <!-- Only for Breathe Providence pods -->
+                <h3 id="monitorBorough" style="margin: 0;"></h3>
+                <p id="monitorType" style="margin: 0;color: royalblue;"></p>
+                <!-- Monitor data time(s) - The current time or the time range depending on the data selected -->
+                <h4 id="monitorTime" class="TimeTitle" ></h4>
+                <h4 id="monitorTime2" class="TimeTitle"></h4>
+                <h2 id="CO2LevelTitle" > Average (mean) CO2 Levels </h2>
+                <!-- The monitor data -->
+                <div id="GenTable">
+                    <table class="overviewTable">
+                        <tbody>
+                            <tr>
+                                <td id="pollName" style="width:60px;color:#888888;">CO2</td>
+                                <td id="pollValue" ></td>
+                                <td id="pollMarker" class="dot"></td>
+                            </tr>
+                            <tr id="Passes">
+                                <td style="width:60px;color:#888888;"></td>
+                                <td id="pollPasses" style="width:120px;"></td>
+                            </tr>
+                       </tbody>
+                    </table>
+                </div>
+                
+                
+            </div>
+
+                
+            
+
+
+                
+            </div>
         </div>
-        <script src="script.js"></script>
+        <script src="script.js"> </script>
     
     </div>
 </body>

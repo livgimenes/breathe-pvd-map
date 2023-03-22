@@ -19,7 +19,7 @@ var CurrentDate = date + " " + time;
 
 console.log(CurrentDate);
 
-
+// maybe fetch the info about the data so I can add it to the map
 
 
 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
@@ -93,6 +93,15 @@ function getColor(co2Value) {
 //filter to only include the current date and time
 
 
+// side bar infos
+var sidebar = document.getElementById('sidebar');
+var closeButton = document.getElementById('button-container');
+var MonitorName = document.getElementById("monitorName");
+var MonitorTimeStart = document.getElementById("monitorTime");
+var MonitorTimeEnd = document.getElementById("monitorTime2");
+var pollValue = document.getElementById("pollValue");
+var pollMarker = document.getElementById("pollMarker");
+
 fetch("coords.json")
   .then(response => response.json())
   .then(coordinates => {
@@ -100,6 +109,7 @@ fetch("coords.json")
         const lat = coordinates[i]["Latitude"];
         const lon = coordinates[i]["Longitude"];
         let color = getColor(coordinates[i]["co2_corrected"]);
+
 
       console.log(coordinates[i]["datetime"])
       console.log(CurrentDate)
@@ -120,24 +130,48 @@ fetch("coords.json")
         circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO2 Level: " + coordinates[i]["co2_corrected"] + " (ppm) ");
       }
       circleMarker.addTo(mymap);
+      
+
+      circleMarker.on('click', function(event) {
+        if (sidebar) {
+          // make it visable 
+          sidebar.style.display = 'block';
+
+          // add the names
+          MonitorName.innerHTML = '<p>' + coordinates[i]["Location"] + '</p>';
+          MonitorTimeStart.innerHTML = '<p> From: September 7, 2022 </p>';
+          MonitorTimeEnd.innerHTML = '<p> From: March 21, 2023 </p>';
+
+          //add monitor data
+          pollValue.innerHTML = '<p>' + coordinates[i]["co2_corrected"] + ' (ppm) </p>';
+
+          //creating circle image with html
+
+          pollMarker.innerHTML = "<span class='dot' style='background-color: " + color + ";'></span>";
+
+          console.log("this is working");
+        }
+      });
         
     }
+    
   });
 
 
-  var sidebar = document.getElementById('sidebar');
-
-  mymap.on('click', function() {
-    if (sidebar) {
-      sidebar.style.display = 'block';
-      console.log("this is working")
-    }
-  });
-
-
-// Add a click event listener to the sidebar
-sidebar.addEventListener('click', function() {
-  // Hide the sidebar when it's clicked
-  console.log("this is working 2");
+closeButton.addEventListener('click', function(event) {
+  // Hide the sidebar
   sidebar.style.display = 'none';
 });
+
+
+// adapt the side bar control from the Breathe London script 
+
+ 
+
+
+  // mymap.on('click', function() {
+  //   if (sidebar) {
+  //     sidebar.style.display = 'block';
+  //     console.log("this is working");
+  //   }
+  // });
