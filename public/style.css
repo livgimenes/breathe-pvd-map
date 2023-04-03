@@ -95,4 +95,11 @@
   display: table;
 }
 
+.sidebar-container {
+  width: 200px; /* adjust to the width of your sidebar */
+}
 
+#chart {
+  width: 100%;
+  height: auto;
+}

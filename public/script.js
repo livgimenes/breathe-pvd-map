@@ -93,6 +93,60 @@ function getColor(co2Value) {
 //filter to only include the current date and time
 
 
+//drawing the map
+function makeChart(data){
+
+  const parseTime = d3.timeParse('%Y-%m-%d %H:%M:%S');
+
+  data.forEach(d => {
+    d.datetime = parseTime(d.datetime);
+  });
+
+
+  const svg = d3.select('#chart')
+  .attr('width', 550)
+  .attr('height', 200);
+
+  const xScale = d3.scaleTime()
+  .domain(d3.extent(data, d => new Date(d.datetime)))
+  .range([50, 750]);
+
+  const yScale = d3.scaleLinear()
+  .domain([0, d3.max(data, d => d.co2_corrected)])
+  .range([450, 50]);
+
+  svg.append('g')
+  .attr('transform', 'translate(0, 450)')
+  .call(d3.axisBottom(xScale));
+
+  svg.append('g')
+  .attr('transform', 'translate(50, 0)')
+  .call(d3.axisLeft(yScale));
+
+  svg.append('path')
+  .datum(data)
+  .attr('fill', 'none')
+  .attr('stroke', 'steelblue')
+  .attr('stroke-width', 2)
+  .attr('d', d3.line()
+    .x(d => xScale(new Date(d.datetime)))
+    .y(d => yScale(d.co2_corrected))
+  );
+}
+
+
+// fake data 
+const data = [
+  {"datetime":"2023-03-16 10:00:00","co2_corrected":487.0,"temp":11.2841673333,"Sensor ID":"Bs192202","Node ID":272,"Location":"Rock Spot","Latitude":41.81509,"Longitude":-71.42216},
+  {"datetime":"2023-03-16 09:00:00","co2_corrected":489.0,"temp":6.432641,"Sensor ID":"Bs192202","Node ID":272,"Location":"Rock Spot","Latitude":41.81509,"Longitude":-71.42216},
+  {"datetime":"2023-03-16 08:00:00","co2_corrected":484.0,"temp":3.3512651667,"Sensor ID":"Bs192202","Node ID":272,"Location":"Rock Spot","Latitude":41.81509,"Longitude":-71.42216},
+  {"datetime":"2023-03-16 07:00:00","co2_corrected":481.0,"temp":2.7500756667,"Sensor ID":"Bs192202","Node ID":272,"Location":"Rock Spot","Latitude":41.81509,"Longitude":-71.42216},
+  {"datetime":"2023-03-16 06:00:00","co2_corrected":480.0,"temp":2.7136075,"Sensor ID":"Bs192202","Node ID":272,"Location":"Rock Spot","Latitude":41.81509,"Longitude":-71.42216},
+  {"datetime":"2023-03-16 05:00:00","co2_corrected":479.0,"temp":2.9801903333,"Sensor ID":"Bs192202","Node ID":272,"Location":"Rock Spot","Latitude":41.81509,"Longitude":-71.42216},
+  {"datetime":"2023-03-16 04:00:00","co2_corrected":479.0,"temp":3.029575,"Sensor ID":"Bs192202","Node ID":272,"Location":"Rock Spot","Latitude":41.81509,"Longitude":-71.42216}
+];
+
+
 // side bar infos
 var sidebar = document.getElementById('sidebar');
 var closeButton = document.getElementById('button-container');
@@ -149,6 +203,9 @@ fetch("coords.json")
 
           pollMarker.innerHTML = "<span class='dot' style='background-color: " + color + ";'></span>";
 
+          //add chart
+          makeChart(data);
+
           console.log("this is working");
         }
       });
@@ -164,14 +221,3 @@ closeButton.addEventListener('click', function(event) {
 });
 
 
-// adapt the side bar control from the Breathe London script 
-
- 
-
-
-  // mymap.on('click', function() {
-  //   if (sidebar) {
-  //     sidebar.style.display = 'block';
-  //     console.log("this is working");
-  //   }
-  // });
