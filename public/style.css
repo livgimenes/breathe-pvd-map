@@ -24,12 +24,12 @@
 }
 
 #close-button {
-  background-image: url('./icons/cross_png.png');
+  background-image: url('./icons/cross_png_clean.png');
   background-size: contain;
   background-repeat: no-repeat;
   cursor: pointer;
   border: none;
-  background-color: none;
+  background-color: white;
   position: absolute;
   top: 10px;
   right: 10px;
@@ -70,6 +70,7 @@
 #CO2LevelTitle{
   margin-top: -5px;
   padding-left: 1.5rem;
+  font-size: 19px;
 }
 
 #GenTable {
@@ -97,9 +98,33 @@
 
 .sidebar-container {
   width: 200px; /* adjust to the width of your sidebar */
+  overflow-x: hidden;
+}
+
+
+#GenTable {
+  margin-top: -20px;
+}
+
+#chartWrapper{
+  height: auto;
+  width: 100%;
 }
 
 #chart {
-  width: 100%;
-  height: auto;
+  margin-top: -8px;
+}
+
+#Timeline{
+  vertical-align: middle;
+  margin-left: 22px;
+  margin-top: -22px;
+  width: 80%;
+  border-radius: 5px;
+}
+
+#info {
+  padding-left: 1.5rem;
+  font-size: 12px;
+  box-sizing: border-box;
 }

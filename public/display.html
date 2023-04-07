@@ -6,20 +6,20 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"/>
     <link rel="stylesheet" type="text/css" href="style.css">
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
 </head>
 <body>
     <div id="mapsuper">
         <div id="map"> 
             <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
             <div id="sidebar">
-        
-                <div id="button-container">
-                    <button id="close-button"></button>
-                </div>
+                <button id="close-button"></button>
+             
 
                 <p id="NetworkName"> Breathe Providence</p>
 
-                <h2 id="monitorName" class="NodeTitle"> </h2>
+                <h1 id="monitorName" class="NodeTitle"> </h1>
                 <!-- Only for Breathe Providence pods -->
                 <h3 id="monitorBorough" style="margin: 0;"></h3>
                 <p id="monitorType" style="margin: 0;color: royalblue;"></p>
@@ -27,6 +27,12 @@
                 <h4 id="monitorTime" class="TimeTitle" ></h4>
                 <h4 id="monitorTime2" class="TimeTitle"></h4>
                 <h2 id="CO2LevelTitle" > Average (mean) CO2 Levels </h2>
+                <select id="Timeline">
+                    <option value="day">Day</option>
+                    <option value="week">Week</option>
+                    <option value="month">Month</option>
+                    <option value="year">Year</option>
+                </select>
                 <!-- The monitor data -->
                 <div id="GenTable">
                     <table class="overviewTable">
@@ -43,9 +49,11 @@
                        </tbody>
                     </table>
                 </div>
-                <div>
-                    <svg id="chart"></svg>
+                <div id="chartWrapper">
+                    <div id="chart"></div>
                 </div>
+                <!--- <a id="info" href="https://www.breatheprovidence.com/air-pollution">Learn more about CO2 and other pollutants</a> -->
+              
                 
                 
             </div>
