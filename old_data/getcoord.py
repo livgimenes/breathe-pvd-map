@@ -78,6 +78,8 @@ def clean_data(data):
   """Cleans the panda dataframe removing missing data, drops unecessary columns and tranforms data from pst to est"""
 
   #drop unecessary columns
+
+  ###TODO: change this to be using local_timestamp instead of datetime
   data = data.drop(columns=['epoch', 'local_timestamp',"node_file_id"])
 
   #remove missing data, -999

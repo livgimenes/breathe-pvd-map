@@ -117,7 +117,7 @@ function makeChart(data) {
   var layout = {
     showlegend: false,
     yaxis: {
-      range: [450, 600],
+      // range: [450, 600],
       showline: true,
       zeroline: true,
 			fixedrange: true,
@@ -147,6 +147,8 @@ function getData(nodeData,timeLine) {
 
     // for the certain period extract the dates that would make it a week, day, month, year
 
+
+
     // call back the python script that would get that data for that period of time 
 
     // get that data, send it back 
@@ -157,12 +159,12 @@ function getData(nodeData,timeLine) {
   // given a node, we want to go and request the data from that node and then plot it on the map
 
   const data = [
-    {"datetime":"2023-03-16 10:00:00","co2_corrected":487.0,"temp":11.2841673333,"Sensor ID":"Bs192202","Node ID":272,"Location":"Rock Spot","Latitude":41.81509,"Longitude":-71.42216},
-    {"datetime":"2023-03-16 09:00:00","co2_corrected":489.0,"temp":6.432641,"Sensor ID":"Bs192202","Node ID":272,"Location":"Rock Spot","Latitude":41.81509,"Longitude":-71.42216},
+    {"datetime":"2023-03-16 10:00:00","co2_corrected":500.0,"temp":11.2841673333,"Sensor ID":"Bs192202","Node ID":272,"Location":"Rock Spot","Latitude":41.81509,"Longitude":-71.42216},
+    {"datetime":"2023-03-16 09:00:00","co2_corrected":550.0,"temp":6.432641,"Sensor ID":"Bs192202","Node ID":272,"Location":"Rock Spot","Latitude":41.81509,"Longitude":-71.42216},
     {"datetime":"2023-03-16 08:00:00","co2_corrected":484.0,"temp":3.3512651667,"Sensor ID":"Bs192202","Node ID":272,"Location":"Rock Spot","Latitude":41.81509,"Longitude":-71.42216},
     {"datetime":"2023-03-16 07:00:00","co2_corrected":481.0,"temp":2.7500756667,"Sensor ID":"Bs192202","Node ID":272,"Location":"Rock Spot","Latitude":41.81509,"Longitude":-71.42216},
     {"datetime":"2023-03-16 06:00:00","co2_corrected":480.0,"temp":2.7136075,"Sensor ID":"Bs192202","Node ID":272,"Location":"Rock Spot","Latitude":41.81509,"Longitude":-71.42216},
-    {"datetime":"2023-03-16 05:00:00","co2_corrected":479.0,"temp":2.9801903333,"Sensor ID":"Bs192202","Node ID":272,"Location":"Rock Spot","Latitude":41.81509,"Longitude":-71.42216},
+    {"datetime":"2023-03-16 05:00:00","co2_corrected":400.0,"temp":2.9801903333,"Sensor ID":"Bs192202","Node ID":272,"Location":"Rock Spot","Latitude":41.81509,"Longitude":-71.42216},
     {"datetime":"2023-03-16 04:00:00","co2_corrected":479.0,"temp":3.029575,"Sensor ID":"Bs192202","Node ID":272,"Location":"Rock Spot","Latitude":41.81509,"Longitude":-71.42216}
   ];
   
@@ -237,25 +239,11 @@ fetch("coords.json")
           const timeLine = " "
 
           timelineSelect.addEventListener('change', function() {
-            if (timelineSelect.value === 'week') {
-              makeChart(getData(coordinates[i]["Node ID"],timeLine));
-
-
-              // display the mean of the data from the past week
-
-            } else if (timelineSelect.value === 'month') {
-              makeChart(getData(coordinates[i]["Node ID"],timeLine));
-
-              // display the mean of the data from the past month
-              
-
-            } else if (timelineSelect.value === 'year') {
-             
-              // display the mean of the data from the past year
-              makeChart(getData(coordinates[i]["Node ID"],timeLine));
-            }
+            timeLine = timelineSelect.value;
           });
-        
+  
+
+          makeChart(getData(coordinates[i]["Node ID"],timeLine));
           console.log("this is working");
         }
       });
