@@ -1,3 +1,4 @@
+
 const apiKey = 'pk.eyJ1IjoiYWxmcmVkMjAxNiIsImEiOiJja2RoMHkyd2wwdnZjMnJ0MTJwbnVmeng5In0.E4QbAFjiWLY8k3AFhDtErA';
 
 const mymap = L.map('map').setView([41.831391, -71.415804], 13);
@@ -95,8 +96,18 @@ function getColor(co2Value) {
 function makeChart(data) {
 
   // Extract the datetime, co2_corrected, and temp values from the data array
+  // const unparsedData = JSON.stringify(data);
+  // const parsedData = JSON.parse(unparsedData);
+  console.log("this is the data being presented to the chart");
+  console.log(data);
   const datetime = data.map(d => d.datetime);
   const co2_corrected = data.map(d => d.co2_corrected);
+
+  console.log("This is the datetime array and then the co2_corrected array");
+  console.log(datetime);
+  console.log(co2_corrected);
+
+ 
   // Create a trace for the CO2 values
   const co2Trace = {
     x: datetime,
@@ -117,7 +128,7 @@ function makeChart(data) {
   var layout = {
     showlegend: false,
     yaxis: {
-      // range: [450, 600],
+      range: [450, 600],
       showline: true,
       zeroline: true,
 			fixedrange: true,
@@ -142,33 +153,27 @@ function makeChart(data) {
 
 }
 
+// should this be an async function?
+function getData(node,timeLine) {
 
-function getData(nodeData,timeLine) {
+  // send over a axios request asking for the data from the backe end, will just send the specification of the node and the timeline 
+  axios.get('/api/data', {
+    params: {
+      nodeId: node,
+      date: timeLine
+    }
+  })
+  .then(response => {
+    // Handle the response from the back end
+    return response.data;
+  })
+  .catch(error => {
+    // Handle any errors that occur during the request
+    console.error(error);
+  });
 
-    // for the certain period extract the dates that would make it a week, day, month, year
-
-
-
-    // call back the python script that would get that data for that period of time 
-
-    // get that data, send it back 
-
-
-
-
-  // given a node, we want to go and request the data from that node and then plot it on the map
-
-  const data = [
-    {"datetime":"2023-03-16 10:00:00","co2_corrected":500.0,"temp":11.2841673333,"Sensor ID":"Bs192202","Node ID":272,"Location":"Rock Spot","Latitude":41.81509,"Longitude":-71.42216},
-    {"datetime":"2023-03-16 09:00:00","co2_corrected":550.0,"temp":6.432641,"Sensor ID":"Bs192202","Node ID":272,"Location":"Rock Spot","Latitude":41.81509,"Longitude":-71.42216},
-    {"datetime":"2023-03-16 08:00:00","co2_corrected":484.0,"temp":3.3512651667,"Sensor ID":"Bs192202","Node ID":272,"Location":"Rock Spot","Latitude":41.81509,"Longitude":-71.42216},
-    {"datetime":"2023-03-16 07:00:00","co2_corrected":481.0,"temp":2.7500756667,"Sensor ID":"Bs192202","Node ID":272,"Location":"Rock Spot","Latitude":41.81509,"Longitude":-71.42216},
-    {"datetime":"2023-03-16 06:00:00","co2_corrected":480.0,"temp":2.7136075,"Sensor ID":"Bs192202","Node ID":272,"Location":"Rock Spot","Latitude":41.81509,"Longitude":-71.42216},
-    {"datetime":"2023-03-16 05:00:00","co2_corrected":400.0,"temp":2.9801903333,"Sensor ID":"Bs192202","Node ID":272,"Location":"Rock Spot","Latitude":41.81509,"Longitude":-71.42216},
-    {"datetime":"2023-03-16 04:00:00","co2_corrected":479.0,"temp":3.029575,"Sensor ID":"Bs192202","Node ID":272,"Location":"Rock Spot","Latitude":41.81509,"Longitude":-71.42216}
-  ];
   
-  return data;
+ 
 }
 
 // fake data 
@@ -188,6 +193,7 @@ var timelineSelect = document.getElementById('Timeline');
 fetch("coords.json")
   .then(response => response.json())
   .then(coordinates => {
+    let fullData = coordinates;
     for (let i = 0; i < coordinates.length; i++) {
         const lat = coordinates[i]["Latitude"];
         const lon = coordinates[i]["Longitude"];
@@ -224,8 +230,21 @@ fetch("coords.json")
           MonitorName.innerHTML = '<p>' + coordinates[i]["Location"] + '</p>';
 
           
-          MonitorTimeStart.innerHTML = '<p> From: September 7, 2022 </p>';
-          MonitorTimeEnd.innerHTML = '<p> From: March 21, 2023 </p>';
+          //TODO: Translate installation dates 
+
+          // use coordinates[i]["Installation Date"] to get the date and time of the installation
+
+
+          const installationDate = coordinates[i]["Installation Date"]; // assuming coordinates is an array of objects
+          const startDate = new Date(installationDate);
+          const endDate = new Date();
+
+          const options = { year: 'numeric', month: 'long', day: 'numeric' };
+
+          MonitorTimeStart.innerHTML = `<p>From: ${startDate.toLocaleDateString('en-US', options)}</p>`;
+          MonitorTimeEnd.innerHTML = `<p>From: ${endDate.toLocaleDateString('en-US', options)}</p>`;
+
+
 
           //add monitor data
           pollValue.innerHTML = '<p>' + coordinates[i]["co2_corrected"] + ' (ppm) </p>';
@@ -236,15 +255,41 @@ fetch("coords.json")
 
 
           //add a listener on the select element, that will change the timeline depending on it 
-          const timeLine = " "
+
+
+          // display this since day is the default
+          console.log("This is the full data");
+          console.log(fullData);
+          console.log("this is the inputed data");
+          console.log(fullData.filter(dataPoint => dataPoint.nodeId === coordinates[i]["Node ID"]));
+          makeChart(fullData.filter(dataPoint => dataPoint.nodeId === coordinates[i]["Node ID"]));
+
 
           timelineSelect.addEventListener('change', function() {
             timeLine = timelineSelect.value;
-          });
+            if (timeLine == "day") {
+              //how do we know the node that I am currently clicking on?
+              makeChart(fullData.filter(dataPoint => dataPoint.nodeId === coordinates[i]["Node ID"]));
   
+            } else if (timeLine == "week") {
+              let weekData = getData(coordinates[i]["Node ID"], "week");
+              makeChart(weekData);
+  
+            } else if (timeLine == "month") {
+              let monthData = getData(coordinates[i]["Node ID"], "month");
+              makeChart(monthData);
 
-          makeChart(getData(coordinates[i]["Node ID"],timeLine));
-          console.log("this is working");
+            }
+            else if (timeLine == "all") {
+              let allData = getData(coordinates[i]["Node ID"], "all");
+              makeChart(allData);
+
+            }
+            
+          });
+
+          
+          // console.log("this is working");
         }
       });
         

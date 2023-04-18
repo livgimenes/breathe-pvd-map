@@ -1,6 +1,7 @@
 import sys
 import json
 import datetime
+from datetime import timedelta
 import calendar
 import pandas as pd
 import urllib
@@ -11,17 +12,28 @@ import numpy as np
 # Get the date parameter from the command-line arguments
 
 #### REAL DATA
-#date = sys.argv[1]
-#node = int(sys.argv[2])
+date = sys.argv[1]
+node = int(sys.argv[2])
 
 sensor_data = pd.read_csv("/Users/liviagimenes/Documents/CS/Breath Providence/breathe-pvd/old_data/sensors_with_nodes.csv")
 
 
 
+### NOTE: The current script also pulls data from the last 24 hours. That is already available in the script. 
+# This is a patch work solution and should be optimized for future use.
+
 ### generate the correct data according to the parameter
 
 def calculate_timerange(date,node):
     """Given a date, calculate the timerange and returns the start and end date"""
+
+    if date == "day":
+        # Get the current date
+        end_date = datetime.datetime.now()
+        end_date = end_date.replace(minute=0, second=0, microsecond=0)
+
+        # Get the start and end date of the day
+        start_date = end_date - timedelta(days=1)
 
     if date == "week":
         # Get the current date
@@ -37,15 +49,15 @@ def calculate_timerange(date,node):
         end_date = end_date.replace(minute=0, second=0, microsecond=0)
 
         # Get the start and end date of the month
-        start_date = end_date.replace(day=calendar.monthrange(end_date.year, end_date.month)[1])
+        start_date = end_date - timedelta(days=30)
 
     elif date == "all":
 
-        curr_date = datetime.datetime.now()
-        curr_date = curr_date.replace(minute=0, second=0, microsecond=0)
+        end_date = datetime.datetime.now()
+        end_date = end_date.replace(minute=0, second=0, microsecond=0)
 
         start_date = str(sensor_data[sensor_data["Node ID"] == node]["Installation Date"].values[0])
-        #convert from str to timeseries with mm/dd/yyyy
+       
         start_date = datetime.datetime.strptime(start_date, "%m/%d/%Y")
 
     return start_date, end_date
@@ -70,22 +82,15 @@ def get_data(node,sensor_data, start_date, end_date, variable, start_time, end_t
     location = str(sensor_data[sensor_data["Node ID"] == node]["Location"].values[0])
 
 
-    print("location: " + location)
-
     location_parsed = urllib.parse.quote(location)
 
-    print(location_parsed)
-
-    print("start date: " + str(start_date))
-    print("end date: " + str(end_date))
+ 
 
     url = get_requests(location_parsed, node, variable, start_date, start_time, end_date, end_time)
     try:
         data = pd.read_csv(url)
     except:
         data = pd.DataFrame()
-        print(f"An error occurred while trying to fetch data from the server for node " + str(node) + " at " + location)
-        print("This is the url: " + url)
     return data
 
 def pst_to_est(time):
@@ -156,48 +161,6 @@ def generate_data(date,node,sensor_data):
 
     return data
 
-#data = generate_data()
-
-#print(data)
-
-##### TESTING DATA
-
-#get all of the values in the node column
-nodes = sensor_data["Node ID"].values
-ranges = ["week","month","all"]
-
-
-def test_all_inputs():
-
-    for node in nodes:
-        for date in ranges:
-            try: 
-                output = generate_data(date,node,sensor_data)
-                print(output)
-            except:
-                print("Something went wrong with node: " + str(node) + " and for range:  " + str(date))
-            output = generate_data(date,node,sensor_data)
-
-#test_all_inputs()
-
-date = "month"
-node = 270
-
-data = generate_data(date,node,sensor_data)
-
-print(generate_data(date,node,sensor_data))
-
-
-
-
-
-
-# date = "week"
-# node = int("270")
-
-
-
-######Use the API to send the data over to the backend 
 
 
 

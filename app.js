@@ -29,6 +29,39 @@ function runPythonScript() {
 
 setInterval(runPythonScript, 60 * 60 * 1000);
 
+// fetching and returning the data from the timeseries
+app.get('/api/data', (req, res) => {
+  
+  // get the data back from res and run the async function 
+  const { nodeId, date } = req.data;
+  const pythonScript = spawn('python', ['old_data/timeseries.py', nodeId, date]);
+
+
+  // response is set to the result of the python script, instead of returning it
+  res.send(new Promise((resolve, reject) => {
+    let stdout = '';
+    pythonScript.stdout.on('data', data => {
+      stdout += data.toString();
+    });
+
+    pythonScript.stderr.on('data', err => {
+      reject(err.toString());
+    });
+
+    pythonScript.on('close', code => {
+      if (code === 0) {
+        resolve(stdout);
+      } else {
+        reject(`Python script exited with code ${code}`);
+      }
+    });
+  })
+)
+
+
+})
+
+
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {

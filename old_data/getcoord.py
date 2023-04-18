@@ -116,9 +116,9 @@ def convert_longitude(longitude):
 def convert_final():
      
     directory = './old_data'
-    file_name = 'breathe_providence_sensors.csv'
+    file_name = 'sensors_with_nodes.csv'
     file_path = os.path.join(directory, file_name)
-    sensors_df = pd.read_csv(file_path,usecols=["Sensor ID","Node ID","Location","Latitude","Longitude"])
+    sensors_df = pd.read_csv(file_path,usecols=["Sensor ID","Node ID","Location","Latitude","Longitude","Installation Date"])
 
 
 
