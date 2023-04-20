@@ -31,35 +31,28 @@ setInterval(runPythonScript, 60 * 60 * 1000);
 
 // fetching and returning the data from the timeseries
 app.get('/api/data', (req, res) => {
-  
-  // get the data back from res and run the async function 
-  const { nodeId, date } = req.data;
-  const pythonScript = spawn('python', ['old_data/timeseries.py', nodeId, date]);
+  console.log(req.query);
+  const { nodeId, date } = req.query;
+  const pythonScript2 = spawn('python3', ['old_data/timeseries.py', nodeId, date]);
 
+  let stdout = '';
+  pythonScript2.stdout.on('data', data => {
+    stdout += data.toString();
+  });
+  console.log(stdout)
 
-  // response is set to the result of the python script, instead of returning it
-  res.send(new Promise((resolve, reject) => {
-    let stdout = '';
-    pythonScript.stdout.on('data', data => {
-      stdout += data.toString();
-    });
+  pythonScript2.stderr.on('data', err => {
+    res.status(500).send(err.toString());
+  });
 
-    pythonScript.stderr.on('data', err => {
-      reject(err.toString());
-    });
-
-    pythonScript.on('close', code => {
-      if (code === 0) {
-        resolve(stdout);
-      } else {
-        reject(`Python script exited with code ${code}`);
-      }
-    });
-  })
-)
-
-
-})
+  pythonScript2.on('close', code => {
+    if (code === 0) {
+      res.send(stdout);
+    } else {
+      res.status(500).send(`Python script exited with code ${code}`);
+    }
+  });
+});
 
 
 

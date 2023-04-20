@@ -93,21 +93,22 @@ function getColor(co2Value) {
 
 
 
-function makeChart(data) {
+async function makeChart(data) {
 
-  // Extract the datetime, co2_corrected, and temp values from the data array
-  // const unparsedData = JSON.stringify(data);
-  // const parsedData = JSON.parse(unparsedData);
+  // change so that the inner html value is also changed here since all of the data is gonna come here
+
   console.log("this is the data being presented to the chart");
   console.log(data);
-  const datetime = data.map(d => d.datetime);
-  const co2_corrected = data.map(d => d.co2_corrected);
 
-  console.log("This is the datetime array and then the co2_corrected array");
-  console.log(datetime);
+  const filteredData = await data.filter(d => d.co2_corrected !== -1);
+  const datetime = await filteredData.map(d => d.datetime);
+  const co2_corrected = await filteredData.map(d => d.co2_corrected);
+
+  console.log("this is the co2");
   console.log(co2_corrected);
+  console.log("this is the datetime");
+  console.log(datetime);
 
- 
   // Create a trace for the CO2 values
   const co2Trace = {
     x: datetime,
@@ -123,7 +124,6 @@ function makeChart(data) {
     hoverinfo: 'none'
   };
 
- 
   // Define the layout with two y-axes
   var layout = {
     showlegend: false,
@@ -131,7 +131,7 @@ function makeChart(data) {
       range: [450, 600],
       showline: true,
       zeroline: true,
-			fixedrange: true,
+      fixedrange: true,
     },
     height: 350,
     xaxis: {
@@ -144,39 +144,34 @@ function makeChart(data) {
       r: 50, 
     },
 
-};
+  };
 
   // Combine the traces and layout and plot the chart
   const datas = [co2Trace];
-  Plotly.newPlot('chart', datas,layout,{staticPlot: true});
-
+  Plotly.newPlot('chart', datas, layout, {staticPlot: true});
 
 }
+
 
 // should this be an async function?
-function getData(node,timeLine) {
-
-  // send over a axios request asking for the data from the backe end, will just send the specification of the node and the timeline 
-  axios.get('/api/data', {
-    params: {
-      nodeId: node,
-      date: timeLine
-    }
-  })
-  .then(response => {
-    // Handle the response from the back end
+async function getData(node, timeLine) {
+  try {
+    const response = await axios.get('/api/data', {
+      params: {
+        nodeId: node,
+        date: timeLine
+      }
+    });
+    console.log("this is the response from the backend");
+    console.log(response.data);
     return response.data;
-  })
-  .catch(error => {
-    // Handle any errors that occur during the request
+  } catch (error) {
+    console.log("whoops!");
     console.error(error);
-  });
-
-  
- 
+    throw error;
+  }
 }
 
-// fake data 
 
 
 
@@ -229,13 +224,7 @@ fetch("coords.json")
           // add the names
           MonitorName.innerHTML = '<p>' + coordinates[i]["Location"] + '</p>';
 
-          
-          //TODO: Translate installation dates 
-
-          // use coordinates[i]["Installation Date"] to get the date and time of the installation
-
-
-          const installationDate = coordinates[i]["Installation Date"]; // assuming coordinates is an array of objects
+          const installationDate = coordinates[i]["Installation Date"]; 
           const startDate = new Date(installationDate);
           const endDate = new Date();
 
@@ -245,51 +234,54 @@ fetch("coords.json")
           MonitorTimeEnd.innerHTML = `<p>From: ${endDate.toLocaleDateString('en-US', options)}</p>`;
 
 
-
           //add monitor data
-          pollValue.innerHTML = '<p>' + coordinates[i]["co2_corrected"] + ' (ppm) </p>';
+          if (coordinates[i]["co2_corrected"] == -1) { 
+            pollValue.innerHTML = '<p>Not Available</p>';
+          }else {
+            // filter the array for that node to get an array of only co2 corrected, sum and divide by the length of the array
+            let filteredData = fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"])
+            let co2_corrected = filteredData.map(d => d.co2_corrected);
+            let sum = co2_corrected.reduce((a, b) => a + b, 0);
+            let avg = sum / co2_corrected.length;
+            avg = Math.round(avg * 10) / 10;
+            avg = avg.toString();
+            pollValue.innerHTML = '<p>' + avg + ' (ppm) </p>';
+          }
 
           //creating circle image with html
 
           pollMarker.innerHTML = "<span class='dot' style='background-color: " + color + ";'></span>";
 
 
-          //add a listener on the select element, that will change the timeline depending on it 
-
-
           // display this since day is the default
           console.log("This is the full data");
           console.log(fullData);
           console.log("this is the inputed data");
-          console.log(fullData.filter(dataPoint => dataPoint.nodeId === coordinates[i]["Node ID"]));
-          makeChart(fullData.filter(dataPoint => dataPoint.nodeId === coordinates[i]["Node ID"]));
+          // entry["Node ID"] === nodeId
+          console.log(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]));
+          makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]));
 
-
+          // TODO: could simplify this by just passing in the timeline variable
           timelineSelect.addEventListener('change', function() {
             timeLine = timelineSelect.value;
             if (timeLine == "day") {
-              //how do we know the node that I am currently clicking on?
-              makeChart(fullData.filter(dataPoint => dataPoint.nodeId === coordinates[i]["Node ID"]));
-  
+              makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]));
             } else if (timeLine == "week") {
-              let weekData = getData(coordinates[i]["Node ID"], "week");
-              makeChart(weekData);
-  
+              getData(coordinates[i]["Node ID"], "week").then(function(weekData) {
+                makeChart(weekData);
+              });
             } else if (timeLine == "month") {
-              let monthData = getData(coordinates[i]["Node ID"], "month");
-              makeChart(monthData);
-
+              getData(coordinates[i]["Node ID"], "month").then(function(monthData) {
+                makeChart(monthData);
+              });
+            } else if (timeLine == "all") {
+              getData(coordinates[i]["Node ID"], "all").then(function(allData) {
+                makeChart(allData);
+              });
             }
-            else if (timeLine == "all") {
-              let allData = getData(coordinates[i]["Node ID"], "all");
-              makeChart(allData);
-
-            }
-            
           });
-
           
-          // console.log("this is working");
+
         }
       });
         

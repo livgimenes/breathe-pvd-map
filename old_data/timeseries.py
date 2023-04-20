@@ -12,28 +12,19 @@ import numpy as np
 # Get the date parameter from the command-line arguments
 
 #### REAL DATA
-date = sys.argv[1]
-node = int(sys.argv[2])
+
+# node = int(sys.argv[1])
+# date = sys.argv[2]
+
+node = 257
+date = "all"
 
 sensor_data = pd.read_csv("/Users/liviagimenes/Documents/CS/Breath Providence/breathe-pvd/old_data/sensors_with_nodes.csv")
-
-
-
-### NOTE: The current script also pulls data from the last 24 hours. That is already available in the script. 
-# This is a patch work solution and should be optimized for future use.
 
 ### generate the correct data according to the parameter
 
 def calculate_timerange(date,node):
     """Given a date, calculate the timerange and returns the start and end date"""
-
-    if date == "day":
-        # Get the current date
-        end_date = datetime.datetime.now()
-        end_date = end_date.replace(minute=0, second=0, microsecond=0)
-
-        # Get the start and end date of the day
-        start_date = end_date - timedelta(days=1)
 
     if date == "week":
         # Get the current date
@@ -135,6 +126,8 @@ def clean_data(data):
   #make the datetime be a string and not include -08:00
   data['datetime'] = data['datetime'].map(lambda x: str(x)[0:19])
 
+  data = data.rename(columns={'co2_corrected_avg_t_drift_applied': 'co2_corrected'})
+
   return data
 
 
@@ -160,6 +153,14 @@ def generate_data(date,node,sensor_data):
     data = clean_data(data)
 
     return data
+
+######## API end point that sends over the data ########
+
+newdata = generate_data(date,node,sensor_data)
+
+##### turn it into a json 
+newdata = newdata.to_json(orient='records')
+print(newdata)
 
 
 
