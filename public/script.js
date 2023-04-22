@@ -4,6 +4,8 @@ const apiKey = 'pk.eyJ1IjoiYWxmcmVkMjAxNiIsImEiOiJja2RoMHkyd2wwdnZjMnJ0MTJwbnVme
 const mymap = L.map('map').setView([41.831391, -71.415804], 13);
 
 
+// Constants
+
 const date_obj = new Date();
 const currentYear = date_obj.getFullYear().toString();
 const currentMonth = (date_obj.getMonth() + 1).toString().padStart(2, '0');
@@ -20,7 +22,15 @@ var CurrentDate = date + " " + time;
 
 console.log(CurrentDate);
 
-// maybe fetch the info about the data so I can add it to the map
+// side bar infos
+var sidebar = document.getElementById('sidebar');
+var closeButton = document.getElementById('close-button');
+var MonitorName = document.getElementById("monitorName");
+var MonitorTimeStart = document.getElementById("monitorTime");
+var MonitorTimeEnd = document.getElementById("monitorTime2");
+var pollValue = document.getElementById("pollValue");
+var pollMarker = document.getElementById("pollMarker");
+var timelineSelect = document.getElementById('Timeline');
 
 
 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
@@ -68,7 +78,11 @@ const legendControl = new LegendControl();
 // Add the custom control to the map
 mymap.addControl(legendControl);
 
-// Define a function to calculate the color based on the value
+
+
+//// Non-Data Handling Helpers
+
+
 function getColor(co2Value) {
   // Define the two RGB colors to interpolate between
   const color1 = [0, 31, 102];  // dark blue
@@ -91,7 +105,15 @@ function getColor(co2Value) {
   return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
 }
 
+// condenses the data by calculating the average
+function processData(datetime, co2_corrected) {
 
+  
+}
+
+
+
+// Async Helpers
 
 async function makeChart(data) {
 
@@ -109,10 +131,44 @@ async function makeChart(data) {
   console.log("this is the datetime");
   console.log(datetime);
 
+  if (co2_corrected.includes(-1)) {
+    pollValue.innerHTML = '<p>Not Available</p>';
+  } else{
+    let sum = co2_corrected.reduce((a, b) => a + b, 0);
+    let avg = sum / co2_corrected.length;
+    avg = Math.round(avg * 10) / 10;
+    avg = avg.toString();
+    pollValue.innerHTML = '<p>' + avg + ' (ppm) </p>';
+  }
+
+  //downscaling bc of the amount of data
+  const chunkSize = 10; // Number of data points to show per chunk
+
+  let processedDatetime = datetime;
+  let processedCo2 = co2_corrected;
+  let xaxisTik = ''
+
+  // scaling fer amounts of data
+  if (co2_corrected.length > 24) { 
+      xaxisTik = '%m-%d'; 
+    if (co2_corrected.length > 710) {
+
+      const { processedDatetime: pd, processedCO2: pc } = processData(datetime, co2_corrected, chunkSize);
+      processedDatetime = pd;
+      processedCo2 = pc;
+
+      console.log(processedDatetime);
+    
+    }
+  } else {
+    xaxisTik = '%H:%M:%S';
+  }
+
+
   // Create a trace for the CO2 values
   const co2Trace = {
-    x: datetime,
-    y: co2_corrected,
+    x: processedDatetime,
+    y: processedCo2,
     type: 'scatter',
     mode: 'lines+markers',
     name: 'CO2',
@@ -128,7 +184,7 @@ async function makeChart(data) {
   var layout = {
     showlegend: false,
     yaxis: {
-      range: [450, 600],
+      //range: [450, 600],
       showline: true,
       zeroline: true,
       fixedrange: true,
@@ -136,7 +192,7 @@ async function makeChart(data) {
     height: 350,
     xaxis: {
       showline: true,
-      tickformat: '%H:%M:%S'
+      tickformat: xaxisTik,
     },
     margin: {
       t: 5,
@@ -145,6 +201,7 @@ async function makeChart(data) {
     },
 
   };
+
 
   // Combine the traces and layout and plot the chart
   const datas = [co2Trace];
@@ -174,17 +231,6 @@ async function getData(node, timeLine) {
 
 
 
-
-// side bar infos
-var sidebar = document.getElementById('sidebar');
-var closeButton = document.getElementById('close-button');
-var MonitorName = document.getElementById("monitorName");
-var MonitorTimeStart = document.getElementById("monitorTime");
-var MonitorTimeEnd = document.getElementById("monitorTime2");
-var pollValue = document.getElementById("pollValue");
-var pollMarker = document.getElementById("pollMarker");
-var timelineSelect = document.getElementById('Timeline');
-
 fetch("coords.json")
   .then(response => response.json())
   .then(coordinates => {
@@ -196,8 +242,7 @@ fetch("coords.json")
 
 
       console.log(coordinates[i]["datetime"])
-      console.log(CurrentDate)
-      const date = coordinates[i]["datetime"];
+      console.log(CurrentDate);
      
 
       let circleMarker = L.circleMarker([lat, lon], {
@@ -233,23 +278,7 @@ fetch("coords.json")
           MonitorTimeStart.innerHTML = `<p>From: ${startDate.toLocaleDateString('en-US', options)}</p>`;
           MonitorTimeEnd.innerHTML = `<p>From: ${endDate.toLocaleDateString('en-US', options)}</p>`;
 
-
-          //add monitor data
-          if (coordinates[i]["co2_corrected"] == -1) { 
-            pollValue.innerHTML = '<p>Not Available</p>';
-          }else {
-            // filter the array for that node to get an array of only co2 corrected, sum and divide by the length of the array
-            let filteredData = fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"])
-            let co2_corrected = filteredData.map(d => d.co2_corrected);
-            let sum = co2_corrected.reduce((a, b) => a + b, 0);
-            let avg = sum / co2_corrected.length;
-            avg = Math.round(avg * 10) / 10;
-            avg = avg.toString();
-            pollValue.innerHTML = '<p>' + avg + ' (ppm) </p>';
-          }
-
           //creating circle image with html
-
           pollMarker.innerHTML = "<span class='dot' style='background-color: " + color + ";'></span>";
 
 
@@ -257,7 +286,7 @@ fetch("coords.json")
           console.log("This is the full data");
           console.log(fullData);
           console.log("this is the inputed data");
-          // entry["Node ID"] === nodeId
+       
           console.log(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]));
           makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]));
 
@@ -278,6 +307,7 @@ fetch("coords.json")
               getData(coordinates[i]["Node ID"], "all").then(function(allData) {
                 makeChart(allData);
               });
+      
             }
           });
           

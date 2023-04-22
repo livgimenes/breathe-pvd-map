@@ -13,11 +13,9 @@ import numpy as np
 
 #### REAL DATA
 
-# node = int(sys.argv[1])
-# date = sys.argv[2]
+node = int(sys.argv[1])
+date = sys.argv[2]
 
-node = 257
-date = "all"
 
 sensor_data = pd.read_csv("/Users/liviagimenes/Documents/CS/Breath Providence/breathe-pvd/old_data/sensors_with_nodes.csv")
 
@@ -120,7 +118,10 @@ def clean_data(data):
   #round to no decimals
   data['co2_corrected_avg_t_drift_applied'] = data['co2_corrected_avg_t_drift_applied'].map(lambda x: round(x))
 
+
   #change time zones 
+
+
   data['datetime'] = data['datetime'].map(lambda x: pst_to_est(x))
 
   #make the datetime be a string and not include -08:00
