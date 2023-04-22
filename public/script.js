@@ -106,9 +106,26 @@ function getColor(co2Value) {
 }
 
 // condenses the data by calculating the average
-function processData(datetime, co2_corrected) {
+function processData(datetime, co2_corrected, chunkSize) {
 
+  const dates = datetime.map(date => new Date(date));
+  const data = dates.map((date, i) => ({ date, co2: co2_corrected[i] }));
+
+  data.sort((a, b) => a.date - b.date);
+
+  const chunkedData = _.chunk(data, chunkSize);
+ 
+
+  const processedData = chunkedData.map(chunk => {
+    const avgCO2 = _.meanBy(chunk, 'co2');
+    const avgDate = chunk[Math.floor(chunk.length / 2)].date;
+    const pcDate = avgDate.toLocaleDateString('en-US', {month: '2-digit', day: '2-digit'});
+    return { date: pcDate, co2: avgCO2 };
+  });
   
+  let processedDatetime = processedData.map(d => d.date);
+  const processedCO2 = processedData.map(d => d.co2);
+  return { processedDatetime, processedCO2 };
 }
 
 
@@ -141,9 +158,6 @@ async function makeChart(data) {
     pollValue.innerHTML = '<p>' + avg + ' (ppm) </p>';
   }
 
-  //downscaling bc of the amount of data
-  const chunkSize = 10; // Number of data points to show per chunk
-
   let processedDatetime = datetime;
   let processedCo2 = co2_corrected;
   let xaxisTik = ''
@@ -152,6 +166,12 @@ async function makeChart(data) {
   if (co2_corrected.length > 24) { 
       xaxisTik = '%m-%d'; 
     if (co2_corrected.length > 710) {
+
+      let chunkSize = 40;
+      
+      if (co2_corrected.length > 1000) {
+        chunkSize = 200;
+      }
 
       const { processedDatetime: pd, processedCO2: pc } = processData(datetime, co2_corrected, chunkSize);
       processedDatetime = pd;
@@ -163,6 +183,11 @@ async function makeChart(data) {
   } else {
     xaxisTik = '%H:%M:%S';
   }
+
+  console.log("This is the processed co2");
+  console.log(processedCo2);
+  console.log("This is the processed datetime");
+  console.log(processedDatetime);
 
 
   // Create a trace for the CO2 values
