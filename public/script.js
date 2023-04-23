@@ -119,7 +119,7 @@ function processData(datetime, co2_corrected, chunkSize) {
   const processedData = chunkedData.map(chunk => {
     const avgCO2 = _.meanBy(chunk, 'co2');
     const avgDate = chunk[Math.floor(chunk.length / 2)].date;
-    const pcDate = avgDate.toLocaleDateString('en-US', {month: '2-digit', day: '2-digit'});
+    const pcDate = avgDate.toISOString().slice(0, 19).replace('T', ' ');
     return { date: pcDate, co2: avgCO2 };
   });
   
@@ -127,7 +127,6 @@ function processData(datetime, co2_corrected, chunkSize) {
   const processedCO2 = processedData.map(d => d.co2);
   return { processedDatetime, processedCO2 };
 }
-
 
 
 // Async Helpers
@@ -209,10 +208,16 @@ async function makeChart(data) {
   var layout = {
     showlegend: false,
     yaxis: {
-      //range: [450, 600],
+      // range: [450, 600],
       showline: true,
       zeroline: true,
       fixedrange: true,
+      //TODO: check in about this 
+      // title: {
+      //   text: 'CO2 (ppm)',
+      //   font: {
+      //     size: 12},
+      // }
     },
     height: 350,
     xaxis: {
@@ -301,10 +306,13 @@ fetch("coords.json")
           const options = { year: 'numeric', month: 'long', day: 'numeric' };
 
           MonitorTimeStart.innerHTML = `<p>From: ${startDate.toLocaleDateString('en-US', options)}</p>`;
-          MonitorTimeEnd.innerHTML = `<p>From: ${endDate.toLocaleDateString('en-US', options)}</p>`;
+          MonitorTimeEnd.innerHTML = `<p>To: ${endDate.toLocaleDateString('en-US', options)}</p>`;
 
           //creating circle image with html
           pollMarker.innerHTML = "<span class='dot' style='background-color: " + color + ";'></span>";
+
+          //make Timeselect default to day 
+          timelineSelect.value = "day";
 
 
           // display this since day is the default
