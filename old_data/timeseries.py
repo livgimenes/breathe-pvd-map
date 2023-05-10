@@ -11,11 +11,12 @@ import numpy as np
 
 # Get the date parameter from the command-line arguments
 
+#TODO: Remove all of the prints
+
 #### REAL DATA
 
 node = int(sys.argv[1])
 date = sys.argv[2]
-
 
 sensor_data = pd.read_csv("/Users/liviagimenes/Documents/CS/Breath Providence/breathe-pvd/old_data/sensors_with_nodes.csv")
 
@@ -108,6 +109,10 @@ def est_to_pst(time):
 def clean_data(data):
   """Cleans the panda dataframe removing missing data, drops unecessary columns and tranforms data from pst to est"""
 
+  # if empty just return the data frame
+  if data.empty:
+    return data
+
   #drop unecessary columns
   data = data.drop(columns=['epoch',"node_file_id"])
   #TODO: change this to use localtime instead of datetime
@@ -162,6 +167,8 @@ newdata = generate_data(date,node,sensor_data)
 ##### turn it into a json 
 newdata = newdata.to_json(orient='records')
 print(newdata)
+
+
 
 
 

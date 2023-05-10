@@ -46,8 +46,6 @@ app.get('/api/data', (req, res) => {
 
   pythonScript2.on('close', code => {
     if (code === 0) {
-      console.log(stdout);
-      console.log(stdout.length);
       res.send(stdout);
     } else {
       res.status(500).send(`Python script exited with code ${code}`);

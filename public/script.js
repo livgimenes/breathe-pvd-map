@@ -31,6 +31,7 @@ var MonitorTimeEnd = document.getElementById("monitorTime2");
 var pollValue = document.getElementById("pollValue");
 var pollMarker = document.getElementById("pollMarker");
 var timelineSelect = document.getElementById('Timeline');
+var loader = document.getElementById('loader');
 
 
 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
@@ -102,6 +103,9 @@ function getColor(co2Value) {
   ];
 
   // Convert the RGB color to a CSS color string and return it
+  console.log("this one color is being returned");
+  console.log(`rgb(${color[0]}, ${color[1]}, ${color[2]})`);
+
   return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
 }
 
@@ -142,19 +146,36 @@ async function makeChart(data) {
   const datetime = await filteredData.map(d => d.datetime);
   const co2_corrected = await filteredData.map(d => d.co2_corrected);
 
+
+
   console.log("this is the co2");
   console.log(co2_corrected);
   console.log("this is the datetime");
-  console.log(datetime);
+  console.log(datetime.length);
+
+  // // check if filteredData is empty
+  // if (datetime.length == 0) {
+  //   return;
+  // }
+
+  // add the change of color here too
+
 
   if (co2_corrected.includes(-1)) {
     pollValue.innerHTML = '<p>Not Available</p>';
+    let color = getColor(0);
+    pollMarker.innerHTML = "<span class='dot' style='background-color: " + color + ";'></span>";
   } else{
     let sum = co2_corrected.reduce((a, b) => a + b, 0);
     let avg = sum / co2_corrected.length;
     avg = Math.round(avg * 10) / 10;
-    avg = avg.toString();
-    pollValue.innerHTML = '<p>' + avg + ' (ppm) </p>';
+    let stringAvg = avg.toString();
+    pollValue.innerHTML = '<p>' + stringAvg + ' (ppm) </p>';
+
+    // generate color based the average for that node
+    let color = getColor(avg);
+
+    pollMarker.innerHTML = "<span class='dot' style='background-color: " + color + ";'></span>";
   }
 
   let processedDatetime = datetime;
@@ -164,7 +185,7 @@ async function makeChart(data) {
   // scaling fer amounts of data
   if (co2_corrected.length > 24) { 
       xaxisTik = '%m-%d'; 
-    if (co2_corrected.length > 710) {
+    if (co2_corrected.length > 400) {
 
       let chunkSize = 40;
       
@@ -204,20 +225,19 @@ async function makeChart(data) {
     hoverinfo: 'none'
   };
 
+  // make the bound be the largest value of y + 10 and the largest value of y - 10
+  yLowBound = Math.min(...processedCo2) - 10;
+  yHighBound = Math.max(...processedCo2) + 10;
+
+
   // Define the layout with two y-axes
   var layout = {
     showlegend: false,
     yaxis: {
-      // range: [450, 600],
+      range: [yLowBound, yHighBound],
       showline: true,
       zeroline: true,
       fixedrange: true,
-      //TODO: check in about this 
-      // title: {
-      //   text: 'CO2 (ppm)',
-      //   font: {
-      //     size: 12},
-      // }
     },
     height: 350,
     xaxis: {
@@ -242,6 +262,7 @@ async function makeChart(data) {
 
 // should this be an async function?
 async function getData(node, timeLine) {
+  // loader.style.display = 'block';
   try {
     const response = await axios.get('/api/data', {
       params: {
