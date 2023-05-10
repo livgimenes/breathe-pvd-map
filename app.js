@@ -10,7 +10,7 @@ app.get('/', (req, res) => {
 
 
 function runPythonScript() {
-  const pythonScript = spawn('python3', ['old_data/getcoord.py']);
+  const pythonScript = spawn('python3', ['data/getcoord.py']);
 
   pythonScript.stdout.on('data', (data) => {
     console.log('Refreshing process started')
@@ -33,7 +33,7 @@ setInterval(runPythonScript, 60 * 60 * 1000);
 app.get('/api/data', (req, res) => {
   console.log(req.query);
   const { nodeId, date } = req.query;
-  const pythonScript2 = spawn('python3', ['old_data/timeseries.py', nodeId, date]);
+  const pythonScript2 = spawn('python3', ['data/timeseries.py', nodeId, date]);
 
   let stdout = '';
   pythonScript2.stdout.on('data', data => {

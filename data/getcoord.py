@@ -46,7 +46,7 @@ def get_requests_for_row(row, start_date, end_date, variable, start_time, end_ti
 #TODO: Comeback to reimplement this 
 def store_failed_requests(failed_requests):
     #save failed requests to a csv file, add to already existing entries
-    directory = './old_data'
+    directory = './data'
     file_name = 'failed_requests.csv'
     file_path = os.path.join(directory, file_name)
     failed_requests.to_csv(file_path, mode='a', header=False)
@@ -115,7 +115,7 @@ def convert_longitude(longitude):
 
 def convert_final():
      
-    directory = './old_data'
+    directory = './data'
     file_name = 'sensors_with_nodes.csv'
     file_path = os.path.join(directory, file_name)
     sensors_df = pd.read_csv(file_path,usecols=["Sensor ID","Node ID","Location","Latitude","Longitude","Installation Date"])
@@ -128,12 +128,10 @@ def convert_final():
     end_time = str(curr_time)[11:19] 
 
     #change back to the time 
-
     rounded_time = curr_time.replace(minute=0, second=0, microsecond=0)
     print("this is the rounded time: " + str(rounded_time))
     start_date = rounded_time.date()
     start_time = "00:00:00"
-    #CO2_corrected_avg_t_drift_applied
     variable = "co2_corrected_avg_t_drift_applied,temp"
 
 
@@ -144,14 +142,8 @@ def convert_final():
     data.sort_values(by='datetime', ascending=False, inplace=True)
 
     print("This is the renamed file ", data)
-
-    #if statement, if the any of columns are null, print the data base
-    
-
-
     print("this is the rounded time: " + str(rounded_time))
-    #it has to be the rounded hour
-
+  
     print("Date list", list(data.columns.values))
 
 

@@ -9,16 +9,14 @@ import urllib.parse
 from pytz import timezone
 import numpy as np
 
-# Get the date parameter from the command-line arguments
 
-#TODO: Remove all of the prints
 
 #### REAL DATA
 
 node = int(sys.argv[1])
 date = sys.argv[2]
 
-sensor_data = pd.read_csv("/Users/liviagimenes/Documents/CS/Breath Providence/breathe-pvd/old_data/sensors_with_nodes.csv")
+sensor_data = pd.read_csv("data/sensors_with_nodes.csv")
 
 ### generate the correct data according to the parameter
 
@@ -71,10 +69,7 @@ def get_data(node,sensor_data, start_date, end_date, variable, start_time, end_t
 
     location = str(sensor_data[sensor_data["Node ID"] == node]["Location"].values[0])
 
-
     location_parsed = urllib.parse.quote(location)
-
- 
 
     url = get_requests(location_parsed, node, variable, start_date, start_time, end_date, end_time)
     try:
