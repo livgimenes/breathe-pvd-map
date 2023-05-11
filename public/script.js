@@ -30,6 +30,7 @@ var MonitorTimeStart = document.getElementById("monitorTime");
 var MonitorTimeEnd = document.getElementById("monitorTime2");
 var pollValue = document.getElementById("pollValue");
 var pollMarker = document.getElementById("pollMarker");
+var pollName = document.getElementById("pollName");
 var timelineSelect = document.getElementById('Timeline');
 var loader = document.getElementById('loader');
 var noChart = document.getElementById('noChart');
@@ -58,7 +59,7 @@ class LegendControl extends L.Control {
       div.style.fontSize = "14px";
       div.innerHTML =  `
       <div>
-          <b>CO2 Levels</b>
+          <b>CO<sub>2</sub> Levels</b>
           <br>
           Date: ${date}
           <br>
@@ -135,7 +136,7 @@ function processData(datetime, co2_corrected, chunkSize) {
 
 // Async Helpers
 
-async function makeChart(data) {
+async function makeChart(data,timeRange) {
 
   // change so that the inner html value is also changed here since all of the data is gonna come here
 
@@ -184,11 +185,23 @@ async function makeChart(data) {
   let processedCo2 = co2_corrected;
   let xaxisTik = ''
 
+
+  if(timeRange == 'day') {
+    pollName.innerHTML = '<p>CO<sub>2</sub> Daily</p>';
+  } else if (timeRange == 'week'){
+    pollName.innerHTML = '<p>CO<sub>2</sub> Weekly</p>';
+  }
+  else if (timeRange == 'month') {
+    pollName.innerHTML = '<p>CO<sub>2</sub> Monthly</p>';
+
+  } else if (timeRange == 'all') {
+    pollName.innerHTML = '<p>CO<sub>2</sub> All</p>';
+  }
+
   // scaling fer amounts of data
   if (co2_corrected.length > 24) { 
       xaxisTik = '%m-%d'; 
     if (co2_corrected.length > 400) {
-
       let chunkSize = 40;
       
       if (co2_corrected.length > 1000) {
@@ -302,9 +315,9 @@ fetch("coords.json")
     });
       
       if(coordinates[i]["co2_corrected"] == -1){
-        circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO2 Level: Not Available ");
+        circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO<sub>2</sub> Level: Not Available ");
       }else{
-        circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO2 Level: " + coordinates[i]["co2_corrected"] + " (ppm) " + "at " + date + "");
+        circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO<sub>2</sub> Level: " + coordinates[i]["co2_corrected"] + " (ppm) " + "at " + date + "");
       }
       circleMarker.addTo(mymap);
       
@@ -329,6 +342,9 @@ fetch("coords.json")
           //creating circle image with html
           pollMarker.innerHTML = "<span class='dot' style='background-color: " + color + ";'></span>";
 
+          // seeting the text to daily for default
+          pollName.innerHTML = '<p>CO<sub>2</sub> Daily</p>';
+
           //make Timeselect default to day 
           timelineSelect.value = "day";
 
@@ -345,18 +361,18 @@ fetch("coords.json")
           timelineSelect.addEventListener('change', function() {
             timeLine = timelineSelect.value;
             if (timeLine == "day") {
-              makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]));
+              makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]), "day");
             } else if (timeLine == "week") {
               getData(coordinates[i]["Node ID"], "week").then(function(weekData) {
-                makeChart(weekData);
+                makeChart(weekData, "week");
               });
             } else if (timeLine == "month") {
               getData(coordinates[i]["Node ID"], "month").then(function(monthData) {
-                makeChart(monthData);
+                makeChart(monthData, "month");
               });
             } else if (timeLine == "all") {
               getData(coordinates[i]["Node ID"], "all").then(function(allData) {
-                makeChart(allData);
+                makeChart(allData, "all");
               });
       
             }
