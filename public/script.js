@@ -282,6 +282,7 @@ fetch("coords.json")
   .then(response => response.json())
   .then(coordinates => {
     let fullData = coordinates;
+    // filter coordinates to only include dates of the current
     for (let i = 0; i < coordinates.length; i++) {
         const lat = coordinates[i]["Latitude"];
         const lon = coordinates[i]["Longitude"];

@@ -13,8 +13,12 @@ import numpy as np
 
 #### REAL DATA
 
-node = int(sys.argv[1])
-date = sys.argv[2]
+# node = int(sys.argv[1])
+# date = sys.argv[2]
+
+node = 257
+date = "all"
+
 
 sensor_data = pd.read_csv("data/sensors_with_nodes.csv")
 
@@ -99,6 +103,23 @@ def est_to_pst(time):
   # Format the date as a string and return
   return date
 
+def pst_to_est(pst_time_str):
+  # Create a timezone object for PST
+  pst_timezone = timezone('US/Pacific')
+    
+  # Convert the input time string to a datetime object in PST
+  pst_time = datetime.datetime.strptime(pst_time_str, '%Y-%m-%d %H:%M:%S')
+  pst_time = pst_timezone.localize(pst_time)
+    
+  # Convert the PST datetime to EST
+  est_timezone = timezone('US/Eastern')
+  est_time = pst_time.astimezone(est_timezone)
+    
+  # Format the EST datetime as a string
+  est_time_str = est_time.strftime('%Y-%m-%d %H:%M:%S')
+    
+  return est_time_str
+
 
 
 def clean_data(data):
@@ -119,9 +140,7 @@ def clean_data(data):
   data['co2_corrected_avg_t_drift_applied'] = data['co2_corrected_avg_t_drift_applied'].map(lambda x: round(x))
 
 
-  #change time zones 
-
-
+  #change time zones, make it display in actual est time
   data['datetime'] = data['datetime'].map(lambda x: pst_to_est(x))
 
   #make the datetime be a string and not include -08:00

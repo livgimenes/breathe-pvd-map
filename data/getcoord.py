@@ -12,6 +12,7 @@ import urllib.parse
 import numpy as np 
 import requests
 import json
+import pytz
 
 ###PRE-CODING READING
 
@@ -57,7 +58,6 @@ def get_data(data, start_date, end_date, variable, start_time, end_time):
     all_data = data.apply(get_requests_for_row, axis=1, args=(start_date, end_date, variable, start_time,end_time))
     combined = pd.concat(all_data.values)
     #how can i get all of the values for 'co2_corrected_avg_t_drift_applied' and print them as list
-    print(combined['co2_corrected_avg_t_drift_applied'].tolist())
     return combined
 
 
@@ -74,26 +74,63 @@ def pst_to_est(time):
   new_time = time.astimezone(timezone('US/Pacific'))
   return new_time
 
+def est_to_pst(time):
+  """Takes in time represented as a datetime and returns, in the same format, the time converted into pst. Assumes the time is est. Returns a str,"""
+
+
+  # Convert to Pacific Timezone
+  date = time.astimezone(timezone('US/Pacific'))
+
+  # Format the date as a string and return
+  return date
+
+def pst_to_est(pst_time_str):
+  # Create a timezone object for PST
+  pst_timezone = timezone('US/Pacific')
+    
+  # Convert the input time string to a datetime object in PST
+  pst_time = datetime.datetime.strptime(pst_time_str, '%Y-%m-%d %H:%M:%S')
+  pst_time = pst_timezone.localize(pst_time)
+    
+  # Convert the PST datetime to EST
+  est_timezone = timezone('US/Eastern')
+  est_time = pst_time.astimezone(est_timezone)
+    
+  # Format the EST datetime as a string
+  est_time_str = est_time.strftime('%Y-%m-%d %H:%M:%S')
+    
+  return est_time_str
+
+
+
+
 def clean_data(data):
   """Cleans the panda dataframe removing missing data, drops unecessary columns and tranforms data from pst to est"""
 
   #drop unecessary columns
 
   ###TODO: change this to be using local_timestamp instead of datetime
-  data = data.drop(columns=['epoch', 'local_timestamp',"node_file_id"])
+
+  data = data.drop(columns=['epoch','datetime',"node_file_id"])
 
   #remove missing data, -999
   data = data.replace({'co2_corrected_avg_t_drift_applied': {-999.00000: np.nan}})
-  data = data.dropna(subset=['datetime', 'co2_corrected_avg_t_drift_applied'])
+  data = data.dropna(subset=['local_timestamp', 'co2_corrected_avg_t_drift_applied'])
 
   #round to no decimals
   data['co2_corrected_avg_t_drift_applied'] = data['co2_corrected_avg_t_drift_applied'].map(lambda x: round(x))
 
-  #change time zones 
-  data['datetime'] = data['datetime'].map(lambda x: pst_to_est(x))
+  #change time zones, make it display in actual est time
+  data['local_timestamp'] = data['local_timestamp'].map(lambda x: pst_to_est(x))
+
 
   #make the datetime be a string and not include -08:00
-  data['datetime'] = data['datetime'].map(lambda x: str(x)[0:19])
+  data['local_timestamp'] = data['local_timestamp'].map(lambda x: str(x)[0:19])
+
+  #rename local_timestamp to datetime
+  data = data.rename(columns={'local_timestamp': 'datetime'})
+
+  
 
   return data
 
@@ -122,14 +159,13 @@ def convert_final():
 
 
 
-    curr_time = pst_to_est(datetime.datetime.now())
+    curr_time = est_to_pst(datetime.datetime.now())
 
     end_date = str(curr_time)[0:10]
     end_time = str(curr_time)[11:19] 
 
     #change back to the time 
     rounded_time = curr_time.replace(minute=0, second=0, microsecond=0)
-    print("this is the rounded time: " + str(rounded_time))
     start_date = rounded_time.date()
     start_time = "00:00:00"
     variable = "co2_corrected_avg_t_drift_applied,temp"
@@ -141,16 +177,8 @@ def convert_final():
     data = data.rename(columns={'co2_corrected_avg_t_drift_applied': 'co2_corrected'})
     data.sort_values(by='datetime', ascending=False, inplace=True)
 
-    print("This is the renamed file ", data)
-    print("this is the rounded time: " + str(rounded_time))
-  
-    print("Date list", list(data.columns.values))
-
-
-
     #maybe add these late
     combined_data = pd.merge(data, sensors_df, left_on='node_id', right_on='Node ID', how="right")
-    print("this is the combined data post merging", combined_data)
     combined_data.fillna(-1, inplace=True)
 
 
@@ -160,10 +188,6 @@ def convert_final():
 
     print(combined_data)
 
-    #filter to only include 
-
-
-    #have it continously add to a csv file to see what has been displaying
 
     directory = "./public"
     print_comb = combined_data.to_json(orient='records')
