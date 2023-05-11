@@ -175,7 +175,7 @@ def convert_final():
 
 
     data = data.rename(columns={'co2_corrected_avg_t_drift_applied': 'co2_corrected'})
-    data.sort_values(by='datetime', ascending=False, inplace=True)
+    data.sort_values(by='datetime', ascending=True, inplace=True)
 
     #maybe add these late
     combined_data = pd.merge(data, sensors_df, left_on='node_id', right_on='Node ID', how="right")
