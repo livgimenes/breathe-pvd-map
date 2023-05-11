@@ -301,9 +301,9 @@ fetch("coords.json")
     });
       
       if(coordinates[i]["co2_corrected"] == -1){
-        circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO2 Level: Not Available");
+        circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO2 Level: Not Available ");
       }else{
-        circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO2 Level: " + coordinates[i]["co2_corrected"] + " (ppm) ");
+        circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO2 Level: " + coordinates[i]["co2_corrected"] + " (ppm) " + "at " + date + "");
       }
       circleMarker.addTo(mymap);
       
