@@ -32,6 +32,8 @@ var pollValue = document.getElementById("pollValue");
 var pollMarker = document.getElementById("pollMarker");
 var timelineSelect = document.getElementById('Timeline');
 var loader = document.getElementById('loader');
+var noChart = document.getElementById('noChart');
+var chart = document.getElementById('chart');
 
 
 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
@@ -85,6 +87,7 @@ mymap.addControl(legendControl);
 
 
 function getColor(co2Value) {
+
   // Define the two RGB colors to interpolate between
   const color1 = [0, 31, 102];  // dark blue
   const color2 = [229, 237, 255];  // light blue
@@ -92,19 +95,16 @@ function getColor(co2Value) {
   if(co2Value == -1) {
     return `#DCDCDC`};
 
-  // Calculate the percentage of the CO2 value between 400 and 600
+
   const percent = 1 - (co2Value - 400) / 200;
 
-  // Interpolate between the two colors based on the percentage
+
   const color = [
     Math.round(color1[0] + (color2[0] - color1[0]) * percent),
     Math.round(color1[1] + (color2[1] - color1[1]) * percent),
     Math.round(color1[2] + (color2[2] - color1[2]) * percent)
   ];
 
-  // Convert the RGB color to a CSS color string and return it
-  console.log("this one color is being returned");
-  console.log(`rgb(${color[0]}, ${color[1]}, ${color[2]})`);
 
   return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
 }
@@ -139,9 +139,6 @@ async function makeChart(data) {
 
   // change so that the inner html value is also changed here since all of the data is gonna come here
 
-  console.log("this is the data being presented to the chart");
-  console.log(data);
-
   const filteredData = await data.filter(d => d.co2_corrected !== -1);
   const datetime = await filteredData.map(d => d.datetime);
   const co2_corrected = await filteredData.map(d => d.co2_corrected);
@@ -151,21 +148,26 @@ async function makeChart(data) {
   console.log("this is the co2");
   console.log(co2_corrected);
   console.log("this is the datetime");
+  console.log(datetime);
+
+  console.log(co2_corrected.length);
   console.log(datetime.length);
-
-  // // check if filteredData is empty
-  // if (datetime.length == 0) {
-  //   return;
-  // }
-
-  // add the change of color here too
+  console.log(co2_corrected.length == 0);
 
 
-  if (co2_corrected.includes(-1)) {
+  // Need to retructure this
+  if (co2_corrected.length === 0) {
+    console.log("it gets here");
     pollValue.innerHTML = '<p>Not Available</p>';
     let color = getColor(0);
     pollMarker.innerHTML = "<span class='dot' style='background-color: " + color + ";'></span>";
+    //make chart display nothing
+    chart.style.display = 'none';
+    noChart.innerHTML = '<p> No data available for this pollutant </p>';
+    return;
   } else{
+    chart.style.display = 'block';
+    noChart.innerHTML = '';
     let sum = co2_corrected.reduce((a, b) => a + b, 0);
     let avg = sum / co2_corrected.length;
     avg = Math.round(avg * 10) / 10;
@@ -203,12 +205,6 @@ async function makeChart(data) {
   } else {
     xaxisTik = '%H:%M:%S';
   }
-
-  console.log("This is the processed co2");
-  console.log(processedCo2);
-  console.log("This is the processed datetime");
-  console.log(processedDatetime);
-
 
   // Create a trace for the CO2 values
   const co2Trace = {

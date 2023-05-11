@@ -129,6 +129,15 @@
   box-sizing: border-box;
 }
 
+#noChart {
+  padding-left: 3.5rem;
+  font-size: 12px;
+  box-sizing: border-box;
+  color: red;
+  padding-bottom: 10px;
+  margin-top: 115px;
+  }
+
 /* .loader {
   border: 10px solid #f3f3f3; 
   border-top: 10px solid #99a4d1; 
