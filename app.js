@@ -10,7 +10,7 @@ app.get('/', (req, res) => {
 
 
 function runPythonScript() {
-  const pythonScript = spawn('python3', ['old_data/getcoord.py']);
+  const pythonScript = spawn('python3', ['data/getcoord.py']);
 
   pythonScript.stdout.on('data', (data) => {
     console.log('Refreshing process started')
@@ -28,6 +28,31 @@ function runPythonScript() {
 
 
 setInterval(runPythonScript, 60 * 60 * 1000);
+
+// fetching and returning the data from the timeseries
+app.get('/api/data', (req, res) => {
+  console.log(req.query);
+  const { nodeId, date } = req.query;
+  const pythonScript2 = spawn('python3', ['data/timeseries.py', nodeId, date]);
+
+  let stdout = '';
+  pythonScript2.stdout.on('data', data => {
+    stdout += data.toString();
+  });
+
+  pythonScript2.stderr.on('data', err => {
+    res.status(500).send(err.toString());
+  });
+
+  pythonScript2.on('close', code => {
+    if (code === 0) {
+      res.send(stdout);
+    } else {
+      res.status(500).send(`Python script exited with code ${code}`);
+    }
+  });
+});
+
 
 
 const port = process.env.PORT || 3000;

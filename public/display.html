@@ -4,24 +4,75 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"/>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
 
-
-    <style>
-        #map{
-            height: 800px;
-            width: 800px;
-            margin:5rem auto;
-        }
-    </style>
 
 </head>
 <body>
-
     <div id="mapsuper">
-        <div id="map"></div>
+        <div id="map"> 
+            <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+            <div id="sidebar">
+                <button id="close-button"></button>
+             
 
-        <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-        <script src="script.js"></script>
+                <p id="NetworkName"> Breathe Providence</p>
+
+                <h1 id="monitorName" class="NodeTitle"> </h1>
+                <!-- Only for Breathe Providence pods -->
+                <h3 id="monitorBorough" style="margin: 0;"></h3>
+                <p id="monitorType" style="margin: 0;color: royalblue;"></p>
+                <!-- Monitor data time(s) - The current time or the time range depending on the data selected -->
+                <h4 id="monitorTime" class="TimeTitle" ></h4>
+                <h4 id="monitorTime2" class="TimeTitle"></h4>
+                <h2 id="CO2LevelTitle" > Average (mean) CO2 Levels </h2>
+                <select id="Timeline">
+                    <option value="day">Day</option>
+                    <option value="week">Week</option>
+                    <option value="month">Month</option>
+                    <option value="all">All</option>
+                </select>
+                <!-- The monitor data -->
+                <div id="GenTable">
+                    <table class="overviewTable">
+                        <tbody>
+                            <tr>
+                                <td id="pollName" style="width:60px;color:#888888;">CO2</td>
+                                <td id="pollValue" ></td>
+                                <td id="pollMarker" class="dot"></td>
+                            </tr>
+                            <tr id="Passes">
+                                <td style="width:60px;color:#888888;"></td>
+                                <td id="pollPasses" style="width:120px;"></td>
+                            </tr>
+                       </tbody>
+                    </table>
+                </div>
+                <div id="chartWrapper">
+                    <div id="chart"></div>
+                    <div id="noChart"></div>
+                    
+                </div>
+                <!-- <div class="loader"></div> -->
+                <!--- <a id="info" href="https://www.breatheprovidence.com/air-pollution">Learn more about CO2 and other pollutants</a> -->
+              
+                
+                
+            </div>
+
+                
+            
+
+
+                
+            </div>
+        </div>
+        <script src="script.js"> </script>
+    
     </div>
 </body>
 </html>
