@@ -186,11 +186,14 @@ def convert_final():
     combined_data['Latitude'] = combined_data['Latitude'].apply(convert_latitude)
     combined_data['Longitude'] = combined_data['Longitude'].apply(convert_longitude)
 
-    print(combined_data)
+    print(list(combined_data['datetime']))
 
 
     directory = "./public"
     print_comb = combined_data.to_json(orient='records')
+
+    #save as csv 
+    combined_data.to_csv(os.path.join(directory, 'coords.csv'), index=False)
     
 
     #comment this out if it works 

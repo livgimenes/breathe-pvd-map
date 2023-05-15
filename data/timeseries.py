@@ -13,11 +13,10 @@ import numpy as np
 
 #### REAL DATA
 
-# node = int(sys.argv[1])
-# date = sys.argv[2]
+node = int(sys.argv[1])
+date = sys.argv[2]
 
-node = 257
-date = "all"
+
 
 
 sensor_data = pd.read_csv("data/sensors_with_nodes.csv")
