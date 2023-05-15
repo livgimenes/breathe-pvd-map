@@ -15,12 +15,14 @@ const currentHour = date_obj.getHours().toString().padStart(2, '0');
 
 var date = currentYear + '-' + currentMonth + '-' + currentDate;
 var time = currentHour + ':00:00';
+// subtract an hour from the time
+time  = (currentHour - 2) + ':00:00';
 
 
-//Variable later used for filtering
-var CurrentDate = date + " " + time;
 
-console.log(CurrentDate);
+// //Variable later used for filtering
+var CurrentDate = date + ' ' + time;
+
 
 // side bar infos
 var sidebar = document.getElementById('sidebar');
@@ -44,6 +46,8 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
     zoomOffset: -1,
     accessToken: apiKey
 }).addTo(mymap);
+
+// Adding the legend 
 
 class LegendControl extends L.Control {
   // Define the onAdd method
@@ -81,7 +85,6 @@ const legendControl = new LegendControl();
 
 // Add the custom control to the map
 mymap.addControl(legendControl);
-
 
 
 //// Non-Data Handling Helpers
@@ -151,20 +154,16 @@ async function makeChart(data,timeRange) {
   console.log("this is the datetime");
   console.log(datetime);
 
-  console.log(co2_corrected.length);
-  console.log(datetime.length);
-  console.log(co2_corrected.length == 0);
 
 
   // Need to retructure this
   if (co2_corrected.length === 0) {
-    console.log("it gets here");
     pollValue.innerHTML = '<p>Not Available</p>';
     let color = getColor(0);
     pollMarker.innerHTML = "<span class='dot' style='background-color: " + color + ";'></span>";
     //make chart display nothing
     chart.style.display = 'none';
-    noChart.innerHTML = '<p> No data available for this pollutant </p>';
+    noChart.innerHTML = '<p> No data available for this time period. </p>';
     return;
   } else{
     chart.style.display = 'block';
@@ -212,7 +211,10 @@ async function makeChart(data,timeRange) {
       processedDatetime = pd;
       processedCo2 = pc;
 
-      console.log(processedDatetime);
+      // add the year to longer ranges
+      if (timeRange == 'all') {
+        xaxisTik = '%Y-%m-%d';
+      }
     
     }
   } else {
@@ -225,7 +227,7 @@ async function makeChart(data,timeRange) {
     y: processedCo2,
     type: 'scatter',
     mode: 'lines+markers',
-    name: 'CO2',
+    name: 'CO<sub>2</sub>',
     yaxis: 'y',
     line: {
       color: 'darkblue',
@@ -247,12 +249,18 @@ async function makeChart(data,timeRange) {
       showline: true,
       zeroline: true,
       fixedrange: true,
+      title: {
+        text: 'CO<sub>2</sub> (ppm)',
+        font: {
+          size: 10},
+      }
     },
     height: 350,
     xaxis: {
       showline: true,
       tickformat: xaxisTik,
     },
+    
     margin: {
       t: 5,
       l: 55, 
@@ -283,27 +291,27 @@ async function getData(node, timeLine) {
     console.log(response.data);
     return response.data;
   } catch (error) {
-    console.log("whoops!");
+    console.log("Invalid Response");
     console.error(error);
     throw error;
   }
 }
 
 
-
 fetch("coords.json")
   .then(response => response.json())
   .then(coordinates => {
     let fullData = coordinates;
-    // filter coordinates to only include dates of the current
+ 
+    // get last date that was emitted
+    const filteredCoordinates = coordinates.filter(obj => obj.datetime !== -1);
+    maxDatetime = filteredCoordinates.reduce((max, obj) => obj.datetime > max ? obj.datetime : max, "");
+    console.log("The latest datetime is:", maxDatetime);
+
     for (let i = 0; i < coordinates.length; i++) {
         const lat = coordinates[i]["Latitude"];
         const lon = coordinates[i]["Longitude"];
         let color = getColor(coordinates[i]["co2_corrected"]);
-
-
-      console.log(coordinates[i]["datetime"])
-      console.log(CurrentDate);
      
 
       let circleMarker = L.circleMarker([lat, lon], {
@@ -313,11 +321,20 @@ fetch("coords.json")
         fillColor: color,
         fillOpacity: 0.8
     });
+
+    // For debugging remove later
+    if (coordinates[i]["co2_corrected"] != maxDatetime){
+      // get the time 
+      console.log("this is the time for the node: " + coordinates[i]["Location"] + " " + coordinates[i]["datetime"]);
+      console.log(coordinates[i]["co2_corrected"]);
       
-      if(coordinates[i]["co2_corrected"] == -1){
-        circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO<sub>2</sub> Level: Not Available ");
+    }
+      
+      // add a clause that it should count as -1 if it's not on the current range 
+      if(coordinates[i]["co2_corrected"] == -1 || coordinates[i]["co2_corrected"] != maxDatetime) {
+        circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO<sub>2</sub> Level: Not Available");
       }else{
-        circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO<sub>2</sub> Level: " + coordinates[i]["co2_corrected"] + " (ppm) " + "at " + date + "");
+        circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO<sub>2</sub> Level: " + coordinates[i]["co2_corrected"] + " (ppm) ");
       }
       circleMarker.addTo(mymap);
       
@@ -350,11 +367,6 @@ fetch("coords.json")
 
 
           // display this since day is the default
-          console.log("This is the full data");
-          console.log(fullData);
-          console.log("this is the inputed data");
-       
-          console.log(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]));
           makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]));
 
           // TODO: could simplify this by just passing in the timeline variable
@@ -385,6 +397,8 @@ fetch("coords.json")
     }
     
   });
+
+
 
 
 closeButton.addEventListener('click', function(event) {
