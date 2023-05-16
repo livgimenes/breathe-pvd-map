@@ -2,6 +2,7 @@
 from timeseries import *
 
 
+
 ##### TESTING DATA
 
 #get all of the values in the node column
@@ -43,4 +44,91 @@ def mine_failures():
         i += 1
     return super_compile_failures
 
-test_all_inputs()
+#test_all_inputs()
+
+
+#### test week 
+def test_week():
+    report = {"node":[],"min":[],"max":[]}
+    for node in nodes:
+        # request data for a week, print out the dates includes
+        week_data = generate_data("week",node,sensor_data)
+        report["node"].append(node)
+        print(node)
+        if not(week_data.empty):
+            #get the min and max from the week
+            report["min"].append(week_data["datetime"].min())
+            report["max"].append(week_data["datetime"].max())
+        else:
+            report["min"].append(-1)
+            report["max"].append(-1)
+    return report 
+
+# print(test_week())
+
+#turn into a dataframe
+# df = pd.DataFrame.from_dict(test_week())
+
+# print(df)
+
+# #save into a csv in test folder
+# df.to_csv("data/tests/test_week.csv")
+
+#### test month
+
+def test_month():
+    report = {"node":[],"min":[],"max":[]}
+    for node in nodes:
+        # request data for a week, print out the dates includes
+        month_data = generate_data("month",node,sensor_data)
+        report["node"].append(node)
+        print(node)
+        if not(month_data.empty):
+            #get the min and max from the week
+            report["min"].append(month_data["datetime"].min())
+            report["max"].append(month_data["datetime"].max())
+        else:
+            report["min"].append(-1)
+            report["max"].append(-1)
+    return report 
+
+# print(test_month())
+
+# #turn into a dataframe
+# df = pd.DataFrame.from_dict(test_month())
+
+# print(df)
+
+# #save into a csv in test folder
+# df.to_csv("data/tests/test_month.csv")
+
+
+#### test all
+
+def test_all():
+    report = {"node":[],"min":[],"max":[]}
+    for node in nodes:
+        # request data for a week, print out the dates includes
+        all_data = generate_data("all",node,sensor_data)
+        report["node"].append(node)
+        print(node)
+        if not(all_data.empty):
+            #get the min and max from the week
+            report["min"].append(all_data["datetime"].min())
+            report["max"].append(all_data["datetime"].max())
+        else:
+            report["min"].append(-1)
+            report["max"].append(-1)
+    return report
+
+print(test_all())
+
+# #turn into a dataframe
+df = pd.DataFrame.from_dict(test_all())
+
+print(df)
+
+# #save into a csv in test folder
+df.to_csv("data/tests/test_all.csv")    
+
+

@@ -149,13 +149,6 @@ async function makeChart(data,timeRange) {
 
 
 
-  console.log("this is the co2");
-  console.log(co2_corrected);
-  console.log("this is the datetime");
-  console.log(datetime);
-
-
-
   // Need to retructure this
   if (co2_corrected.length === 0) {
     pollValue.innerHTML = '<p>Not Available</p>';
@@ -197,11 +190,24 @@ async function makeChart(data,timeRange) {
     pollName.innerHTML = '<p>CO<sub>2</sub> All</p>';
   }
 
+  // display the data based on type
+  if (timeRange == 'day') {
+    xaxisTik = '%m-%d %H:%M';
+  } else if (timeRange == 'week' || timeRange == 'month') { 
+    xaxisTik = '%m-%d';
+  } else if (timeRange == 'all') { 
+    xaxisTik = '%Y-%m-%d';
+  }
+
+  console.log(co2_corrected.length);
+
+
   // scaling fer amounts of data
-  if (co2_corrected.length > 24) { 
-      xaxisTik = '%m-%d'; 
-    if (co2_corrected.length > 400) {
-      let chunkSize = 40;
+    if (co2_corrected.length > 120) {
+      let chunkSize = 8;
+      if (co2_corrected.length> 400){
+        chunkSize = 40;
+      }
       
       if (co2_corrected.length > 1000) {
         chunkSize = 200;
@@ -210,16 +216,8 @@ async function makeChart(data,timeRange) {
       const { processedDatetime: pd, processedCO2: pc } = processData(datetime, co2_corrected, chunkSize);
       processedDatetime = pd;
       processedCo2 = pc;
-
-      // add the year to longer ranges
-      if (timeRange == 'all') {
-        xaxisTik = '%Y-%m-%d';
-      }
     
     }
-  } else {
-    xaxisTik = '%H:%M:%S';
-  }
 
   // Create a trace for the CO2 values
   const co2Trace = {

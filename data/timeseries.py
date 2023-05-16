@@ -32,7 +32,7 @@ def calculate_timerange(date,node):
         end_date = end_date.replace(minute=0, second=0, microsecond=0)
 
         # Get the start and end date of the week
-        start_date = end_date - datetime.timedelta(days=end_date.weekday())
+        start_date = end_date - datetime.timedelta(days=7)
 
     elif date == "month":
         # Get the current date
@@ -50,6 +50,7 @@ def calculate_timerange(date,node):
         start_date = str(sensor_data[sensor_data["Node ID"] == node]["Installation Date"].values[0])
        
         start_date = datetime.datetime.strptime(start_date, "%m/%d/%Y")
+
 
     return start_date, end_date
 
@@ -81,20 +82,10 @@ def get_data(node,sensor_data, start_date, end_date, variable, start_time, end_t
         data = pd.DataFrame()
     return data
 
-def pst_to_est(time):
-  """Takes in time represented as a string and returns, in the same format, the time converted into est. Returns a str,"""
-
-  #convert it to a time date module
-  if type(time) == str:
-    time = datetime.datetime.strptime(time,"%Y-%m-%d %H:%M:%S")
-
-  new_time = time.astimezone(timezone('US/Pacific'))
-  return new_time
 
 def est_to_pst(time):
   """Takes in time represented as a datetime and returns, in the same format, the time converted into pst. Assumes the time is est. Returns a str,"""
 
-  # Convert the string to a datetime object
 
   # Convert to Pacific Timezone
   date = time.astimezone(timezone('US/Pacific'))
@@ -121,6 +112,7 @@ def pst_to_est(pst_time_str):
 
 
 
+
 def clean_data(data):
   """Cleans the panda dataframe removing missing data, drops unecessary columns and tranforms data from pst to est"""
 
@@ -133,17 +125,26 @@ def clean_data(data):
   #TODO: change this to use localtime instead of datetime
 
   data = data.replace({'co2_corrected_avg_t_drift_applied': {-999.00000: np.nan}})
-  data = data.dropna(subset=['datetime', 'co2_corrected_avg_t_drift_applied'])
+  data = data.dropna(subset=['datetime',"local_timestamp", 'co2_corrected_avg_t_drift_applied'])
 
   #round to no decimals
   data['co2_corrected_avg_t_drift_applied'] = data['co2_corrected_avg_t_drift_applied'].map(lambda x: round(x))
 
 
   #change time zones, make it display in actual est time
-  data['datetime'] = data['datetime'].map(lambda x: pst_to_est(x))
+  data['local_timestamp'] = data['local_timestamp'].map(lambda x: pst_to_est(x))
 
   #make the datetime be a string and not include -08:00
-  data['datetime'] = data['datetime'].map(lambda x: str(x)[0:19])
+  data['local_timestamp'] = data['local_timestamp'].map(lambda x: str(x)[0:19])
+
+  #rename the column
+
+  #drop the datetime column
+  data = data.drop(columns=['datetime'])
+
+  #rename the local_timestamp column to be datetime
+  data = data.rename(columns={'local_timestamp': 'datetime'})
+  
 
   data = data.rename(columns={'co2_corrected_avg_t_drift_applied': 'co2_corrected'})
 
@@ -155,7 +156,7 @@ def generate_data(date,node,sensor_data):
 
     start_range, end_range = calculate_timerange(date,node)
 
-    #change the timezone
+    #convert to pst
     start_range = est_to_pst(start_range)
     end_range = est_to_pst(end_range)
 
