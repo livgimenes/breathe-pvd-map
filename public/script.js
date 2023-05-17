@@ -318,7 +318,9 @@ fetch("coords.json")
         weight: 1,
         fillColor: color,
         fillOpacity: 0.8
-    });
+      });
+
+    
 
     // For debugging remove later
     if (coordinates[i]["co2_corrected"] != maxDatetime){
@@ -329,7 +331,10 @@ fetch("coords.json")
     }
       
       // add a clause that it should count as -1 if it's not on the current range 
-      if(coordinates[i]["co2_corrected"] == -1 || coordinates[i]["co2_corrected"] != maxDatetime) {
+      // || coordinates[i]["co2_corrected"] != maxDatetime
+
+      // TODO: Revise this part
+      if(coordinates[i]["co2_corrected"] == -1) {
         circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO<sub>2</sub> Level: Not Available");
       }else{
         circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO<sub>2</sub> Level: " + coordinates[i]["co2_corrected"] + " (ppm) ");

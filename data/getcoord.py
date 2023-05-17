@@ -161,14 +161,26 @@ def convert_final():
 
     curr_time = est_to_pst(datetime.datetime.now())
 
+    ##subtract 1 day from current time
+    start_time = curr_time - datetime.timedelta(days=1)
+
+
+    #round curr_time and start_time to the nearest hour
+    curr_time = curr_time.replace(minute=0, second=0, microsecond=0)
+    start_time = start_time.replace(minute=0, second=0, microsecond=0)
+
+    ## converting both of them to strings
+    start_date = str(start_time)[0:10]
+    start_time = str(start_time)[11:19]
+
     end_date = str(curr_time)[0:10]
     end_time = str(curr_time)[11:19] 
 
-    #change back to the time 
-    rounded_time = curr_time.replace(minute=0, second=0, microsecond=0)
-    start_date = rounded_time.date()
-    start_time = "00:00:00"
+
     variable = "co2_corrected_avg_t_drift_applied,temp"
+
+    print(start_date,start_time)
+    print(end_date,end_time)
 
 
     data = clean_data(get_data(sensors_df,start_date, end_date, variable, start_time, end_time))
@@ -193,7 +205,7 @@ def convert_final():
     print_comb = combined_data.to_json(orient='records')
 
     #save as csv 
-    combined_data.to_csv(os.path.join(directory, 'coords.csv'), index=False)
+    combined_data.to_csv(os.path.join("./data/tests", 'coords.csv'), index=False)
     
 
     #comment this out if it works 
@@ -211,7 +223,7 @@ final_data = convert_final()
 # url = 'http://localhost:3000/api/data'
 # headers = {'Content-type': 'application/json'}
 # response = requests.post(url, data=json.dumps(final_data), headers=headers)
-# print(response.status_code)
+# print(response.status_co
 
 
 

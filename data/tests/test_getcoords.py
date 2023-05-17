@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import pytz
+import pandas as pd
 
 def pst_to_est(pst_time_str):
     # Create a timezone object for PST
@@ -18,8 +19,14 @@ def pst_to_est(pst_time_str):
     
     return est_time_str
 
-pst_time_str = '2023-05-11 15:30:00'
+pst_time_str = '2023-05-11 19:42:00'
 est_time_str = pst_to_est(pst_time_str)
 print(f'PST time: {pst_time_str}')
 print(f'EST time: {est_time_str}')
+
+
+### Read from the csv and check out the data
+
+
+
 
