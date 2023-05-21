@@ -1,4 +1,5 @@
 
+
 const apiKey = 'pk.eyJ1IjoiYWxmcmVkMjAxNiIsImEiOiJja2RoMHkyd2wwdnZjMnJ0MTJwbnVmeng5In0.E4QbAFjiWLY8k3AFhDtErA';
 
 const mymap = L.map('map').setView([41.831391, -71.415804], 13);
@@ -141,7 +142,7 @@ function processData(datetime, co2_corrected, chunkSize) {
 
 async function makeChart(data,timeRange) {
 
-  // change so that the inner html value is also changed here since all of the data is gonna come here
+
 
   const filteredData = await data.filter(d => d.co2_corrected !== -1);
   const datetime = await filteredData.map(d => d.datetime);
@@ -267,7 +268,6 @@ async function makeChart(data,timeRange) {
 
   };
 
-
   // Combine the traces and layout and plot the chart
   const datas = [co2Trace];
   Plotly.newPlot('chart', datas, layout, {staticPlot: true});
@@ -275,9 +275,7 @@ async function makeChart(data,timeRange) {
 }
 
 
-// should this be an async function?
 async function getData(node, timeLine) {
-  // loader.style.display = 'block';
   try {
     const response = await axios.get('/api/data', {
       params: {
@@ -330,9 +328,6 @@ fetch("coords.json")
       
     }
       
-      // add a clause that it should count as -1 if it's not on the current range 
-      // || coordinates[i]["co2_corrected"] != maxDatetime
-
       // TODO: Revise this part
       if(coordinates[i]["co2_corrected"] == -1) {
         circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO<sub>2</sub> Level: Not Available");
@@ -368,28 +363,49 @@ fetch("coords.json")
           //make Timeselect default to day 
           timelineSelect.value = "day";
 
+          loader.style.display = 'none';
 
           // display this since day is the default
           makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]));
 
-          // TODO: could simplify this by just passing in the timeline variable
+          
           timelineSelect.addEventListener('change', function() {
             timeLine = timelineSelect.value;
             if (timeLine == "day") {
               makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]), "day");
             } else if (timeLine == "week") {
+
+              //activate loading
+              loader.style.display = 'block';
+              chart.style.display = 'none';
+
               getData(coordinates[i]["Node ID"], "week").then(function(weekData) {
                 makeChart(weekData, "week");
+                loader.style.display = 'none';
               });
+              
             } else if (timeLine == "month") {
+
+              // // activate loading
+              loader.style.display = 'block';
+              chart.style.display = 'none';
+
               getData(coordinates[i]["Node ID"], "month").then(function(monthData) {
                 makeChart(monthData, "month");
+                loader.style.display = 'none';
               });
+
             } else if (timeLine == "all") {
+
+              // activate loading
+              loader.style.display = 'block';
+              chart.style.display = 'none';
+
               getData(coordinates[i]["Node ID"], "all").then(function(allData) {
                 makeChart(allData, "all");
+                loader.style.display = 'none';
               });
-      
+        
             }
           });
           
