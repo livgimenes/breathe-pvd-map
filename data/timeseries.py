@@ -16,6 +16,8 @@ import numpy as np
 node = int(sys.argv[1])
 date = sys.argv[2]
 
+# node = 264
+# date = "week"
 
 
 
@@ -176,11 +178,8 @@ def generate_data(date,node,sensor_data):
 
 ######## API end point that sends over the data ########
 
-newdata = generate_data(date,node,sensor_data)
+print(generate_data(date,node,sensor_data).to_json(orient='records'))
 
-##### turn it into a json 
-newdata = newdata.to_json(orient='records')
-print(newdata)
 
 
 

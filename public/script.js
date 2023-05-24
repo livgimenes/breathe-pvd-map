@@ -192,15 +192,15 @@ async function makeChart(data,timeRange) {
   }
 
   // display the data based on type
+
+  //TODO: this is not working
   if (timeRange == 'day') {
-    xaxisTik = '%m-%d %H:%M';
+    xaxisTik = '%H:%M';
   } else if (timeRange == 'week' || timeRange == 'month') { 
     xaxisTik = '%m-%d';
   } else if (timeRange == 'all') { 
     xaxisTik = '%Y-%m-%d';
   }
-
-  console.log(co2_corrected.length);
 
 
   // scaling fer amounts of data
@@ -257,7 +257,7 @@ async function makeChart(data,timeRange) {
     height: 350,
     xaxis: {
       showline: true,
-      tickformat: xaxisTik,
+      tickformat: '%d %H:%M',
     },
     
     margin: {
@@ -276,7 +276,8 @@ async function makeChart(data,timeRange) {
 
 
 async function getData(node, timeLine) {
-  try {
+  console.log('this is the node id');
+  console.log(node);
     const response = await axios.get('/api/data', {
       params: {
         nodeId: node,
@@ -286,11 +287,6 @@ async function getData(node, timeLine) {
     console.log("this is the response from the backend");
     console.log(response.data);
     return response.data;
-  } catch (error) {
-    console.log("Invalid Response");
-    console.error(error);
-    throw error;
-  }
 }
 
 
@@ -351,7 +347,7 @@ fetch("coords.json")
 
           const options = { year: 'numeric', month: 'long', day: 'numeric' };
 
-          MonitorTimeStart.innerHTML = `<p>From: ${startDate.toLocaleDateString('en-US', options)}</p>`;
+          MonitorTimeStart.innerHTML = `<p>Installed from: ${startDate.toLocaleDateString('en-US', options)}</p>`;
           MonitorTimeEnd.innerHTML = `<p>To: ${endDate.toLocaleDateString('en-US', options)}</p>`;
 
           //creating circle image with html
@@ -365,49 +361,54 @@ fetch("coords.json")
 
           loader.style.display = 'none';
 
+
           // display this since day is the default
           makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]));
 
           
-          timelineSelect.addEventListener('change', function() {
-            timeLine = timelineSelect.value;
-            if (timeLine == "day") {
-              makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]), "day");
-            } else if (timeLine == "week") {
+          // timelineSelect.addEventListener('change', function() {
+          //   timeLine = timelineSelect.value;
+          //   if (timeLine == "day") {
+          //     makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]), "day");
+          //   } else if (timeLine == "week") {
 
-              //activate loading
-              loader.style.display = 'block';
-              chart.style.display = 'none';
+          //     //activate loading
+          //     loader.style.display = 'block';
+          //     chart.style.display = 'none';
+          //     if (coordinates[i]["Node ID"] == -1) {
+          //       noChart.innerHTML = ''
+          //     }
 
-              getData(coordinates[i]["Node ID"], "week").then(function(weekData) {
-                makeChart(weekData, "week");
-                loader.style.display = 'none';
-              });
-              
-            } else if (timeLine == "month") {
-
-              // // activate loading
-              loader.style.display = 'block';
-              chart.style.display = 'none';
-
-              getData(coordinates[i]["Node ID"], "month").then(function(monthData) {
-                makeChart(monthData, "month");
-                loader.style.display = 'none';
-              });
-
-            } else if (timeLine == "all") {
-
-              // activate loading
-              loader.style.display = 'block';
-              chart.style.display = 'none';
-
-              getData(coordinates[i]["Node ID"], "all").then(function(allData) {
-                makeChart(allData, "all");
-                loader.style.display = 'none';
-              });
         
-            }
-          });
+          //     getData(coordinates[i]["Node ID"], "week").then(function(weekData) {
+          //       makeChart(weekData, "week");
+          //       loader.style.display = 'none';
+          //     });
+              
+          //   } else if (timeLine == "month") {
+
+          //     // // activate loading
+          //     loader.style.display = 'block';
+          //     chart.style.display = 'none';
+
+          //     getData(coordinates[i]["Node ID"], "month").then(function(monthData) {
+          //       makeChart(monthData, "month");
+          //       loader.style.display = 'none';
+          //     });
+
+          //   } else if (timeLine == "all") {
+
+          //     // activate loading
+          //     loader.style.display = 'block';
+          //     chart.style.display = 'none';
+
+          //     getData(coordinates[i]["Node ID"], "all").then(function(allData) {
+          //       makeChart(allData, "all");
+          //       loader.style.display = 'none';
+          //     });
+        
+          //   }
+          // });
           
 
         }

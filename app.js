@@ -40,13 +40,16 @@ app.get('/api/data', (req, res) => {
     stdout += data.toString();
   });
 
+
   pythonScript2.stderr.on('data', err => {
     res.status(500).send(err.toString());
   });
 
   pythonScript2.on('close', code => {
+
     if (code === 0) {
       res.send(stdout);
+      console.log(stdout);
     } else {
       res.status(500).send(`Python script exited with code ${code}`);
     }
