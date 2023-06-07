@@ -276,16 +276,12 @@ async function makeChart(data,timeRange) {
 
 
 async function getData(node, timeLine) {
-  console.log('this is the node id');
-  console.log(node);
     const response = await axios.get('/api/data', {
       params: {
         nodeId: node,
         date: timeLine
       }
     });
-    console.log("this is the response from the backend");
-    console.log(response.data);
     return response.data;
 }
 
@@ -298,7 +294,7 @@ fetch("coords.json")
     // get last date that was emitted
     const filteredCoordinates = coordinates.filter(obj => obj.datetime !== -1);
     maxDatetime = filteredCoordinates.reduce((max, obj) => obj.datetime > max ? obj.datetime : max, "");
-    console.log("The latest datetime is:", maxDatetime);
+  
 
     for (let i = 0; i < coordinates.length; i++) {
         const lat = coordinates[i]["Latitude"];
@@ -314,15 +310,6 @@ fetch("coords.json")
         fillOpacity: 0.8
       });
 
-    
-
-    // For debugging remove later
-    if (coordinates[i]["co2_corrected"] != maxDatetime){
-      // get the time 
-      console.log("this is the time for the node: " + coordinates[i]["Location"] + " " + coordinates[i]["datetime"]);
-      console.log(coordinates[i]["co2_corrected"]);
-      
-    }
       
       // TODO: Revise this part
       if(coordinates[i]["co2_corrected"] == -1) {
