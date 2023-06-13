@@ -351,51 +351,6 @@ fetch("coords.json")
 
           // display this since day is the default
           makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]));
-
-          
-          // timelineSelect.addEventListener('change', function() {
-          //   timeLine = timelineSelect.value;
-          //   if (timeLine == "day") {
-          //     makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]), "day");
-          //   } else if (timeLine == "week") {
-
-          //     //activate loading
-          //     loader.style.display = 'block';
-          //     chart.style.display = 'none';
-          //     if (coordinates[i]["Node ID"] == -1) {
-          //       noChart.innerHTML = ''
-          //     }
-
-        
-          //     getData(coordinates[i]["Node ID"], "week").then(function(weekData) {
-          //       makeChart(weekData, "week");
-          //       loader.style.display = 'none';
-          //     });
-              
-          //   } else if (timeLine == "month") {
-
-          //     // // activate loading
-          //     loader.style.display = 'block';
-          //     chart.style.display = 'none';
-
-          //     getData(coordinates[i]["Node ID"], "month").then(function(monthData) {
-          //       makeChart(monthData, "month");
-          //       loader.style.display = 'none';
-          //     });
-
-          //   } else if (timeLine == "all") {
-
-          //     // activate loading
-          //     loader.style.display = 'block';
-          //     chart.style.display = 'none';
-
-          //     getData(coordinates[i]["Node ID"], "all").then(function(allData) {
-          //       makeChart(allData, "all");
-          //       loader.style.display = 'none';
-          //     });
-        
-          //   }
-          // });
           
 
         }
