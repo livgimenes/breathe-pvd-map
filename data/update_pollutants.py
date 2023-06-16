@@ -14,6 +14,13 @@ import requests
 import json
 import pytz
 
+################# 
+
+### Global variable for failed requests
+FAILED_REQUESTS = {"node_id":[], "location":[], "time":[]}
+
+
+
 ###PRE-CODING READING
 
 def get_requests(node_name, node_id, variable, start_date, start_time, end_date, end_time):
@@ -39,25 +46,30 @@ def get_requests_for_row(row, start_date, end_date, variable, start_time, end_ti
         data = pd.read_csv(url)
     except:
         data = pd.DataFrame()
-        print(f"An error occurred while trying to fetch data from the server for node " + str(row["Node ID"]) + " at " + row["Location"])
-        print("This is the url: " + url)
+
+        #storing logs
+        FAILED_REQUESTS["node_id"].append(row["Node ID"])
+        FAILED_REQUESTS["location"].append(row["Location"])
+        FAILED_REQUESTS["time"].append(datetime.datetime.now()) 
+
     return data
 
-
-#TODO: Comeback to reimplement this 
 def store_failed_requests(failed_requests):
-    #save failed requests to a csv file, add to already existing entries
-    directory = './data'
-    file_name = 'failed_requests.csv'
-    file_path = os.path.join(directory, file_name)
-    failed_requests.to_csv(file_path, mode='a', header=False)
+    
+    #get values from the failed requests from the csv
+    failed_df = pd.read_csv("data/logs/failed_logs.csv")
+
+    #add the most recent FAILED_REQUESTS to the dataframe
+    failed_df = failed_df.append(failed_requests, ignore_index=True)
+
+    #add the current logs to table, add to the csv file
+    failed_df.to_csv("data/logs/failed_logs.csv", index=False)
 
 
 def get_data(data, start_date, end_date, variable, start_time, end_time):
     """Loads all the measurements from the nodes and store them into a pandas dataframe. To modify specifics go to get_requests for row"""
     all_data = data.apply(get_requests_for_row, axis=1, args=(start_date, end_date, variable, start_time,end_time))
     combined = pd.concat(all_data.values)
-    #how can i get all of the values for 'co2_corrected_avg_t_drift_applied' and print them as list
     return combined
 
 
@@ -179,9 +191,6 @@ def convert_final():
 
     variable = "co2_corrected_avg_t_drift_applied,temp"
 
-    print(start_date,start_time)
-    print(end_date,end_time)
-
 
     data = clean_data(get_data(sensors_df,start_date, end_date, variable, start_time, end_time))
 
@@ -198,11 +207,13 @@ def convert_final():
     combined_data['Latitude'] = combined_data['Latitude'].apply(convert_latitude)
     combined_data['Longitude'] = combined_data['Longitude'].apply(convert_longitude)
 
-    print(list(combined_data['datetime']))
-
 
     directory = "./public"
     print_comb = combined_data.to_json(orient='records')
+
+    #save failed logs
+    store_failed_requests(combined_data)
+    
 
     #save as csv 
     combined_data.to_csv(os.path.join("./data/tests", 'coords.csv'), index=False)
@@ -219,11 +230,8 @@ def convert_final():
 
 # ### File is correct 
 final_data = convert_final()
-# print(final_data)
-# url = 'http://localhost:3000/api/data'
-# headers = {'Content-type': 'application/json'}
-# response = requests.post(url, data=json.dumps(final_data), headers=headers)
-# print(response.status_co
+print(final_data)
+
 
 
 
