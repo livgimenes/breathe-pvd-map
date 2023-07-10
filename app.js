@@ -1,5 +1,6 @@
 const express = require('express');
-const { spawn } = require('child_process');
+const { spawn } = require('child_process'); 
+const axios = require('axios');
 const app = express();
 
 app.use(express.static(__dirname + '/public'));
@@ -9,12 +10,26 @@ app.get('/', (req, res) => {
 });
 
 
+// this has to be sending new data 
+
+
 function runPythonScript() {
   const pythonScript = spawn('python3', ['data/update_pollutants.py']);
 
   pythonScript.stdout.on('data', (data) => {
     console.log('Refreshing process started')
     console.log(`stdout: ${data}`);
+
+    const parsedData = JSON.parse(data);
+    
+    // Make an HTTP POST request to your backend API with the updated data
+    axios.post('/main_data', parsedData)
+      .then(response => {
+        console.log('Data sent successfully');
+      })
+      .catch(error => {
+        console.error('Error sending data:', error);
+      });
   });
 
   pythonScript.stderr.on('data', (data) => {
@@ -22,15 +37,15 @@ function runPythonScript() {
   });
 
   pythonScript.on('close', (code) => {
-    console.log(`Json is updated. child process exited with code ${code}`);
+    console.log(`Json is updated. Child process exited with code ${code}`);
   });
 }
 
-
+/// might want to monitor this to make sure it only goes off when it's actually a strike
 setInterval(runPythonScript, 60 * 60 * 1000);
 
 // fetching and returning the data from the timeseries
-app.get('/api/data', (req, res) => {
+app.get('/timeseries', (req, res) => {
   console.log(req.query);
   const { nodeId, date } = req.query;
   const pythonScript2 = spawn('python3', ['data/get_timeseries.py', nodeId, date]);

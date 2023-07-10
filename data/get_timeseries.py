@@ -139,8 +139,6 @@ def clean_data(data):
   #make the datetime be a string and not include -08:00
   data['local_timestamp'] = data['local_timestamp'].map(lambda x: str(x)[0:19])
 
-  #rename the column
-
   #drop the datetime column
   data = data.drop(columns=['datetime'])
 

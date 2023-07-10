@@ -93,7 +93,6 @@ mymap.addControl(legendControl);
 
 function getColor(co2Value) {
 
-  // Define the two RGB colors to interpolate between
   const color1 = [0, 31, 102];  // dark blue
   const color2 = [229, 237, 255];  // light blue
 
@@ -275,8 +274,8 @@ async function makeChart(data,timeRange) {
 }
 
 
-async function getData(node, timeLine) {
-    const response = await axios.get('/api/data', {
+async function getTimeSeriesData(node, timeLine) {
+    const response = await axios.get('/timeseries', {
       params: {
         nodeId: node,
         date: timeLine
@@ -286,126 +285,93 @@ async function getData(node, timeLine) {
 }
 
 
-fetch("coords.json")
-  .then(response => response.json())
-  .then(coordinates => {
-    let fullData = coordinates;
+// create an async function that loads the data from the backend 
+async function receiveMainData() {
+    // if it's not the set timer that we need to make a call 
+
+  // might have to put an interval timer her 
+
+  
+  const response = await axios.get('/main_data');
+  return response.data
+}
+
+
+
+let fullData = receiveMainData();
+let coordinates = receiveMainData();
+
+
+
+// it's return a promise that has yet to be received 
+console.log(fullData);
  
-    // get last date that was emitted
-    const filteredCoordinates = coordinates.filter(obj => obj.datetime !== -1);
-    maxDatetime = filteredCoordinates.reduce((max, obj) => obj.datetime > max ? obj.datetime : max, "");
+// get last date that was emitted
+const filteredCoordinates = coordinates.filter(obj => obj.datetime !== -1);
+maxDatetime = filteredCoordinates.reduce((max, obj) => obj.datetime > max ? obj.datetime : max, "");
   
 
-    for (let i = 0; i < coordinates.length; i++) {
-        const lat = coordinates[i]["Latitude"];
-        const lon = coordinates[i]["Longitude"];
-        let color = getColor(coordinates[i]["co2_corrected"]);
+for (let i = 0; i < coordinates.length; i++) {
+  const lat = coordinates[i]["Latitude"];
+  const lon = coordinates[i]["Longitude"];
+  let color = getColor(coordinates[i]["co2_corrected"]);
      
 
-      let circleMarker = L.circleMarker([lat, lon], {
-        radius: 8,
-        color: 'black',
-        weight: 1,
-        fillColor: color,
-        fillOpacity: 0.8
-      });
+  let circleMarker = L.circleMarker([lat, lon], {
+    radius: 8,
+    color: 'black',
+    weight: 1,
+    fillColor: color,
+    fillOpacity: 0.8
+    }); 
 
       
-      // TODO: Revise this part
-      if(coordinates[i]["co2_corrected"] == -1) {
-        circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO<sub>2</sub> Level: Not Available");
-      }else{
-        circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO<sub>2</sub> Level: " + coordinates[i]["co2_corrected"] + " (ppm) ");
+    // TODO: Revise this part
+    if(coordinates[i]["co2_corrected"] == -1) {
+      circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO<sub>2</sub> Level: Not Available");
+    }else{
+      circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO<sub>2</sub> Level: " + coordinates[i]["co2_corrected"] + " (ppm) ");
+    }
+    circleMarker.addTo(mymap);
+      
+
+    circleMarker.on('click', function(event) {
+    if (sidebar) {
+      // make it visable 
+      sidebar.style.display = 'block';
+
+      // add the names
+      MonitorName.innerHTML = '<p>' + coordinates[i]["Location"] + '</p>';
+
+      const installationDate = coordinates[i]["Installation Date"]; 
+      const startDate = new Date(installationDate);
+      const endDate = new Date();
+
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+
+      MonitorTimeStart.innerHTML = `<p>Installed from: ${startDate.toLocaleDateString('en-US', options)}</p>`;
+      MonitorTimeEnd.innerHTML = `<p>To: ${endDate.toLocaleDateString('en-US', options)}</p>`;
+
+      //creating circle image with html
+      pollMarker.innerHTML = "<span class='dot' style='background-color: " + color + ";'></span>";
+
+      // seeting the text to daily for default
+      pollName.innerHTML = '<p>CO<sub>2</sub> Daily</p>';
+
+      //make Timeselect default to day 
+      timelineSelect.value = "day";
+
+      loader.style.display = 'none';
+
+      makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]));
+
+    
+
       }
-      circleMarker.addTo(mymap);
-      
-
-      circleMarker.on('click', function(event) {
-        if (sidebar) {
-          // make it visable 
-          sidebar.style.display = 'block';
-
-          // add the names
-          MonitorName.innerHTML = '<p>' + coordinates[i]["Location"] + '</p>';
-
-          const installationDate = coordinates[i]["Installation Date"]; 
-          const startDate = new Date(installationDate);
-          const endDate = new Date();
-
-          const options = { year: 'numeric', month: 'long', day: 'numeric' };
-
-          MonitorTimeStart.innerHTML = `<p>Installed from: ${startDate.toLocaleDateString('en-US', options)}</p>`;
-          MonitorTimeEnd.innerHTML = `<p>To: ${endDate.toLocaleDateString('en-US', options)}</p>`;
-
-          //creating circle image with html
-          pollMarker.innerHTML = "<span class='dot' style='background-color: " + color + ";'></span>";
-
-          // seeting the text to daily for default
-          pollName.innerHTML = '<p>CO<sub>2</sub> Daily</p>';
-
-          //make Timeselect default to day 
-          timelineSelect.value = "day";
-
-          loader.style.display = 'none';
-
-
-          // display this since day is the default
-          makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]));
-
-          
-          // timelineSelect.addEventListener('change', function() {
-          //   timeLine = timelineSelect.value;
-          //   if (timeLine == "day") {
-          //     makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]), "day");
-          //   } else if (timeLine == "week") {
-
-          //     //activate loading
-          //     loader.style.display = 'block';
-          //     chart.style.display = 'none';
-          //     if (coordinates[i]["Node ID"] == -1) {
-          //       noChart.innerHTML = ''
-          //     }
-
-        
-          //     getData(coordinates[i]["Node ID"], "week").then(function(weekData) {
-          //       makeChart(weekData, "week");
-          //       loader.style.display = 'none';
-          //     });
-              
-          //   } else if (timeLine == "month") {
-
-          //     // // activate loading
-          //     loader.style.display = 'block';
-          //     chart.style.display = 'none';
-
-          //     getData(coordinates[i]["Node ID"], "month").then(function(monthData) {
-          //       makeChart(monthData, "month");
-          //       loader.style.display = 'none';
-          //     });
-
-          //   } else if (timeLine == "all") {
-
-          //     // activate loading
-          //     loader.style.display = 'block';
-          //     chart.style.display = 'none';
-
-          //     getData(coordinates[i]["Node ID"], "all").then(function(allData) {
-          //       makeChart(allData, "all");
-          //       loader.style.display = 'none';
-          //     });
-        
-          //   }
-          // });
-          
-
-        }
-      });
+    });
         
     }
     
-  });
-
-
 
 
 closeButton.addEventListener('click', function(event) {
