@@ -57,7 +57,6 @@ def get_data(data, start_date, end_date, variable, start_time, end_time):
     """Loads all the measurements from the nodes and store them into a pandas dataframe. To modify specifics go to get_requests for row"""
     all_data = data.apply(get_requests_for_row, axis=1, args=(start_date, end_date, variable, start_time,end_time))
     combined = pd.concat(all_data.values)
-    #how can i get all of the values for 'co2_corrected_avg_t_drift_applied' and print them as list
     return combined
 
 
@@ -74,12 +73,12 @@ def pst_to_est(time):
   new_time = time.astimezone(timezone('US/Pacific'))
   return new_time
 
-def est_to_pst(time):
+def est_to_pst(est_time_str):
   """Takes in time represented as a datetime and returns, in the same format, the time converted into pst. Assumes the time is est. Returns a str,"""
 
 
   # Convert to Pacific Timezone
-  date = time.astimezone(timezone('US/Pacific'))
+  date = est_time_str.astimezone(timezone('US/Pacific'))
 
   # Format the date as a string and return
   return date
@@ -106,8 +105,6 @@ def pst_to_est(pst_time_str):
 
 def clean_data(data):
   """Cleans the panda dataframe removing missing data, drops unecessary columns and tranforms data from pst to est"""
-
-  #drop unecessary columns
 
   ###TODO: change this to be using local_timestamp instead of datetime
 
@@ -219,12 +216,7 @@ def convert_final():
 
 # ### File is correct 
 final_data = convert_final()
-# print(final_data)
-# url = 'http://localhost:3000/api/data'
-# headers = {'Content-type': 'application/json'}
-# response = requests.post(url, data=json.dumps(final_data), headers=headers)
-# print(response.status_co
-
+print(final_data)
 
 
 

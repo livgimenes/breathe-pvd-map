@@ -310,8 +310,6 @@ fetch("coords.json")
         fillOpacity: 0.8
       });
 
-      
-      // TODO: Revise this part
       if(coordinates[i]["co2_corrected"] == -1) {
         circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO<sub>2</sub> Level: Not Available");
       }else{
