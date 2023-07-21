@@ -13,8 +13,10 @@ import numpy as np
 import requests
 import json
 import pytz
+import time
 
 ################# 
+
 
 ### Global variable for failed requests
 FAILED_REQUESTS = {"node_id":[], "location":[], "time":[]}
@@ -203,9 +205,12 @@ def convert_final():
     combined_data.fillna(-1, inplace=True)
 
 
-    combined_data = combined_data.drop("node_id", axis='columns')
+    combined_data = combined_data.drop(["Installation Date","node_id"], axis='columns')
     combined_data['Latitude'] = combined_data['Latitude'].apply(convert_latitude)
     combined_data['Longitude'] = combined_data['Longitude'].apply(convert_longitude)
+
+    #filter combined data to only include data from node 254
+    combined_data = combined_data[combined_data['Node ID'] == 254]
 
 
     directory = "./public"
@@ -230,8 +235,8 @@ def convert_final():
 
 # ### File is correct 
 final_data = convert_final()
-print(final_data)
-
+print(final_data, flush=True)
+# print(len(final_data))
 
 
 

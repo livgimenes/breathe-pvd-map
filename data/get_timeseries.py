@@ -13,11 +13,11 @@ import numpy as np
 
 #### REAL DATA
 
-node = int(sys.argv[1])
-date = sys.argv[2]
+# node = int(sys.argv[1])
+# date = sys.argv[2]
 
-# node = 264
-# date = "week"
+node = 264
+date = "all"
 
 
 
