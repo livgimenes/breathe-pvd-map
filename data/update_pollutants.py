@@ -209,8 +209,7 @@ def convert_final():
     combined_data['Latitude'] = combined_data['Latitude'].apply(convert_latitude)
     combined_data['Longitude'] = combined_data['Longitude'].apply(convert_longitude)
 
-    #filter combined data to only include data from node 254
-    combined_data = combined_data[combined_data['Node ID'] == 254]
+   
 
 
     directory = "./public"
