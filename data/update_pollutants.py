@@ -71,7 +71,7 @@ def store_failed_requests(failed_requests):
 def get_data(data, start_date, end_date, variable, start_time, end_time):
     """Loads all the measurements from the nodes and store them into a pandas dataframe. To modify specifics go to get_requests for row"""
     all_data = data.apply(get_requests_for_row, axis=1, args=(start_date, end_date, variable, start_time,end_time))
-    combined = pd.concat(all_data.values)
+    combined = pd.concat(all_data.values,sort=True)
     return combined
 
 
@@ -193,7 +193,7 @@ def convert_final():
 
     variable = "co2_corrected_avg_t_drift_applied,temp"
 
-
+   
     data = clean_data(get_data(sensors_df,start_date, end_date, variable, start_time, end_time))
 
 
@@ -201,11 +201,11 @@ def convert_final():
     data.sort_values(by='datetime', ascending=True, inplace=True)
 
     #maybe add these late
-    combined_data = pd.merge(data, sensors_df, left_on='node_id', right_on='Node ID', how="right")
+    combined_data = pd.merge(data, sensors_df, left_on='node_id', right_on='Node ID', how="right", sort=False)
     combined_data.fillna(-1, inplace=True)
 
 
-    combined_data = combined_data.drop(["Installation Date","node_id"], axis='columns')
+    combined_data = combined_data.drop(["node_id"], axis='columns')
     combined_data['Latitude'] = combined_data['Latitude'].apply(convert_latitude)
     combined_data['Longitude'] = combined_data['Longitude'].apply(convert_longitude)
 

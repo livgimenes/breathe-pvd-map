@@ -285,6 +285,16 @@ async function getTimeSeriesData(node, timeLine) {
 }
 
 
+async function updateMainData() {
+  const response = await axios.get('/main_data');
+  return response.data;
+}
+
+let mainData = updateMainData();
+
+console.log(mainData);
+
+
 fetch('/main_data')
   .then(response => response.json())
   .then(coordinates => {

@@ -32,7 +32,6 @@ async function getMainData() {
     let stdout = ''; 
 
     updateScript.stdout.on('data', (data) => {
-      console.log('Refreshing process started');
       console.log(`stdout: ${data}`);
       stdout += data.toString(); 
     });
@@ -88,5 +87,4 @@ const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`Server started on port ${port}`);
   console.log("Loading Data in...");
-  console.log(getMainData());
 });
