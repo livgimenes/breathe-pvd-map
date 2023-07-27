@@ -286,88 +286,113 @@ async function getTimeSeriesData(node, timeLine) {
 
 
 async function updateMainData() {
+  //maybe add a trigger for new data here
   const response = await axios.get('/main_data');
   return response.data;
 }
 
-let mainData = updateMainData();
 
-console.log(mainData);
+async function makeMap() { 
+  let coordinates = await updateMainData();
 
+  console.log(coordinates);
 
-fetch('/main_data')
-  .then(response => response.json())
-  .then(coordinates => {
-    let fullData = coordinates;
+  let fullData = coordinates;
  
-    // get last date that was emitted
-    const filteredCoordinates = coordinates.filter(obj => obj.datetime !== -1);
-    maxDatetime = filteredCoordinates.reduce((max, obj) => obj.datetime > max ? obj.datetime : max, "");
+  // get last date that was emitted
+  const filteredCoordinates = coordinates.filter(obj => obj.datetime !== -1);
+  maxDatetime = filteredCoordinates.reduce((max, obj) => obj.datetime > max ? obj.datetime : max, "");
+
+
+  for (let i = 0; i < coordinates.length; i++) {
+      const lat = coordinates[i]["Latitude"];
+      const lon = coordinates[i]["Longitude"];
+      let color = getColor(coordinates[i]["co2_corrected"]);
+ 
+
+    let circleMarker = L.circleMarker([lat, lon], {
+      radius: 8,
+      color: 'black',
+    weight: 1,
+    fillColor: color,
+    fillOpacity: 0.8
+  });
+
+  
+  // TODO: Revise this part
+  if(coordinates[i]["co2_corrected"] == -1) {
+    circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO<sub>2</sub> Level: Not Available");
+  }else{
+    circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO<sub>2</sub> Level: " + coordinates[i]["co2_corrected"] + " (ppm) ");
+  }
+  circleMarker.addTo(mymap);
   
 
-    for (let i = 0; i < coordinates.length; i++) {
-        const lat = coordinates[i]["Latitude"];
-        const lon = coordinates[i]["Longitude"];
-        let color = getColor(coordinates[i]["co2_corrected"]);
-     
+  circleMarker.on('click', function(event) {
+    if (sidebar) {
+      // make it visable 
+      sidebar.style.display = 'block';
 
-      let circleMarker = L.circleMarker([lat, lon], {
-        radius: 8,
-        color: 'black',
-        weight: 1,
-        fillColor: color,
-        fillOpacity: 0.8
-      });
+      // add the names
+      MonitorName.innerHTML = '<p>' + coordinates[i]["Location"] + '</p>';
 
+      const installationDate = coordinates[i]["Installation Date"]; 
+      const startDate = new Date(installationDate);
+      const endDate = new Date();
+
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+
+      MonitorTimeStart.innerHTML = `<p>Installed from: ${startDate.toLocaleDateString('en-US', options)}</p>`;
+      MonitorTimeEnd.innerHTML = `<p>To: ${endDate.toLocaleDateString('en-US', options)}</p>`;
+
+      //creating circle image with html
+      pollMarker.innerHTML = "<span class='dot' style='background-color: " + color + ";'></span>";
+
+      // seeting the text to daily for default
+      pollName.innerHTML = '<p>CO<sub>2</sub> Daily</p>';
+
+      //make Timeselect default to day 
+      timelineSelect.value = "day";
+
+      loader.style.display = 'none';
+
+
+      // display this since day is the default
+      makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]));
       
-      // TODO: Revise this part
-      if(coordinates[i]["co2_corrected"] == -1) {
-        circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO<sub>2</sub> Level: Not Available");
-      }else{
-        circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO<sub>2</sub> Level: " + coordinates[i]["co2_corrected"] + " (ppm) ");
-      }
-      circleMarker.addTo(mymap);
-      
 
-      circleMarker.on('click', function(event) {
-        if (sidebar) {
-          // make it visable 
-          sidebar.style.display = 'block';
-
-          // add the names
-          MonitorName.innerHTML = '<p>' + coordinates[i]["Location"] + '</p>';
-
-          const installationDate = coordinates[i]["Installation Date"]; 
-          const startDate = new Date(installationDate);
-          const endDate = new Date();
-
-          const options = { year: 'numeric', month: 'long', day: 'numeric' };
-
-          MonitorTimeStart.innerHTML = `<p>Installed from: ${startDate.toLocaleDateString('en-US', options)}</p>`;
-          MonitorTimeEnd.innerHTML = `<p>To: ${endDate.toLocaleDateString('en-US', options)}</p>`;
-
-          //creating circle image with html
-          pollMarker.innerHTML = "<span class='dot' style='background-color: " + color + ";'></span>";
-
-          // seeting the text to daily for default
-          pollName.innerHTML = '<p>CO<sub>2</sub> Daily</p>';
-
-          //make Timeselect default to day 
-          timelineSelect.value = "day";
-
-          loader.style.display = 'none';
-
-
-          // display this since day is the default
-          makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]));
-          
-
-        }
-      });
-        
     }
-    
   });
+    
+}}
+
+makeMap();
+
+
+// TODO: Review this logic later 
+
+// Function to calculate the time until the next straight hour
+function timeUntilNextHour() {
+  const now = new Date();
+  const nextHour = new Date(now);
+  nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0); // Set the time to the next straight hour (e.g., 12:00:00)
+  return nextHour.getTime() - now.getTime();
+}
+
+
+function scheduleDataUpdate() {
+  const delay = 10000; // 10 seconds in milliseconds
+  setTimeout(() => {
+    makeMap();
+    setInterval(processData, 3600000); // Schedule subsequent updates every hour
+  }, timeUntilNextHour() + delay);
+}
+
+// Call the initial scheduling function
+scheduleDataUpdate();
+
+
+
 
 
 closeButton.addEventListener('click', function(event) {
