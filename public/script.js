@@ -48,44 +48,9 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
     accessToken: apiKey
 }).addTo(mymap);
 
-// Adding the legend 
 
-class LegendControl extends L.Control {
-  // Define the onAdd method
-  onAdd() {
-      const div = L.DomUtil.create('div', 'legend');
-      div.style.backgroundColor = "white";
-      div.style.padding = "6px";
-      div.style.borderRadius = "6px";
-      div.style.width = "max-content";
-      div.style.position = "absolute";
-      div.style.right = "650px";
-      div.style.top = "520px";
-      div.style.fontSize = "14px";
-      div.innerHTML =  `
-      <div>
-          <b>CO<sub>2</sub> Levels</b>
-          <br>
-          Date: ${date}
-          <br>
-          Time:  ${time}
-          <br>
-          <b>Legend</b>
-          <br>
-          <div style="height: 20px;">600 ppm </div>
-          <div style="display:inline-block; width: 20px; height: 120px; background: linear-gradient(to bottom, rgb(0, 31, 102), rgb(39, 74, 146), rgb(77, 117, 190), rgb(115, 160, 234), rgb(153, 187, 244), rgb(191, 213, 253), rgb(214, 226, 255), rgb(229, 237, 255));;"></div>
-          <br>
-          <div style="height: 20px;">400 ppm </div>
-          </div>
-      </div>`;
-      return div;
-  }
-}
 
-const legendControl = new LegendControl();
 
-// Add the custom control to the map
-mymap.addControl(legendControl);
 
 
 // add a block will display a button that can switch the components
@@ -372,10 +337,56 @@ async function makeMap() {
     
 }}
 
+class LegendControl extends L.Control {
+  // Define the onAdd method
+  onAdd() {
+      const div = L.DomUtil.create('div', 'legend');
+      div.style.backgroundColor = "white";
+      div.style.padding = "6px";
+      div.style.borderRadius = "6px";
+      div.style.width = "max-content";
+      div.style.position = "absolute";
+      div.style.right = "620px";
+      div.style.top = "450px";
+      div.style.fontSize = "14px";
+      div.innerHTML =  `
+      <div>
+        <b>Legend</b>
+        <br>
+        Date: ${date}
+        <br>
+        Time: ${time}
+        <br>
+        <b>Pollutants:</b>
+        <ul style="list-style: none; margin: 0; padding: 0"">
+          <li>
+            <input type="radio" id="f-option" name="selector">
+            <label for="f-option">CO</label>
+          </li>
+          <li>
+            <input type="radio" id="s-option" name="selector">
+            <label for="s-option">CO<sub>2</sub></label>
+          </li>
+        </ul>
+          <b>Concentration(ppm):</b>
+          <br>
+          <div style="height: 20px;">600 ppm </div>
+          <div style="display:inline-block; width: 20px; height: 120px; background: linear-gradient(to bottom, rgb(0, 31, 102), rgb(39, 74, 146), rgb(77, 117, 190), rgb(115, 160, 234), rgb(153, 187, 244), rgb(191, 213, 253), rgb(214, 226, 255), rgb(229, 237, 255));;"></div>
+          <br>
+          <div style="height: 20px;">400 ppm </div>
+          </div>
+      </div>`;
+      return div;
+  }
+}
+
+const legendControl = new LegendControl();
+
+// Add the custom control to the map
+mymap.addControl(legendControl);
+
 makeMap();
 
-
-// TODO: Review this logic later 
 
 // Function to calculate the time until the next straight hour
 function timeUntilNextHour() {
