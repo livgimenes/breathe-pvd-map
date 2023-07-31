@@ -17,7 +17,8 @@ app.get('/main_data', async (req, res) => {
   try {
     const data = await getMainData();
     res.send(data);
-    console.log("Data Sent");
+    // add the current time it was sent
+    console.log("Data Sent at " + new Date().toLocaleString());
   } catch (error) {
     res.status(500).json({ error: 'An error occurred while fetching data' });
   }
@@ -32,7 +33,7 @@ async function getMainData() {
     let stdout = ''; 
 
     updateScript.stdout.on('data', (data) => {
-      console.log(`stdout: ${data}`);
+      console.log(`Data Collected!`);
       stdout += data.toString(); 
     });
 

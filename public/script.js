@@ -88,6 +88,11 @@ const legendControl = new LegendControl();
 mymap.addControl(legendControl);
 
 
+// add a block will display a button that can switch the components
+
+
+
+
 //// Non-Data Handling Helpers
 
 
@@ -289,6 +294,7 @@ async function updateMainData() {
   //maybe add a trigger for new data here
   const response = await axios.get('/main_data');
   return response.data;
+
 }
 
 
@@ -375,18 +381,26 @@ makeMap();
 function timeUntilNextHour() {
   const now = new Date();
   const nextHour = new Date(now);
-  nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0); // Set the time to the next straight hour (e.g., 12:00:00)
-  return nextHour.getTime() - now.getTime();
+  nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0); 
+  const nextTime = nextHour.getTime() - now.getTime()
+  console.log("Time until the next hour:", nextTime, "milliseconds");
+  return nextTime;
 }
 
 
 function scheduleDataUpdate() {
-  const delay = 10000; // 10 seconds in milliseconds
+  const delay = 10000; 
+  const timeUntilNext = timeUntilNextHour();
+  
+  console.log("Scheduling update in", timeUntilNext + delay, "milliseconds");
+  
   setTimeout(() => {
     makeMap();
     setInterval(processData, 3600000); // Schedule subsequent updates every hour
-  }, timeUntilNextHour() + delay);
+    console.log("Update successful!");
+  }, timeUntilNext + delay);
 }
+
 
 // Call the initial scheduling function
 scheduleDataUpdate();
