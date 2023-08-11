@@ -2,11 +2,10 @@
 
 const apiKey = 'pk.eyJ1IjoiYWxmcmVkMjAxNiIsImEiOiJja2RoMHkyd2wwdnZjMnJ0MTJwbnVmeng5In0.E4QbAFjiWLY8k3AFhDtErA';
 
-const mymap = L.map('map').setView([41.831391, -71.415804], 13);
+const mymap = L.map('map').setView([41.831392, -71.417804], 12.5);
 
 
 // Constants
-
 const date_obj = new Date();
 const currentYear = date_obj.getFullYear().toString();
 const currentMonth = (date_obj.getMonth() + 1).toString().padStart(2, '0');
@@ -25,7 +24,7 @@ time  = (currentHour - 2) + ':00:00';
 var CurrentDate = date + ' ' + time;
 
 
-// side bar infos
+// Buttons 
 var sidebar = document.getElementById('sidebar');
 var closeButton = document.getElementById('close-button');
 var MonitorName = document.getElementById("monitorName");
@@ -38,6 +37,8 @@ var timelineSelect = document.getElementById('Timeline');
 var loader = document.getElementById('loader');
 var noChart = document.getElementById('noChart');
 var chart = document.getElementById('chart');
+var NetworkName = document.getElementById('NetworkName');
+var ChartTitle = document.getElementById("LevelTitle");
 
 
 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
@@ -49,28 +50,40 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
 }).addTo(mymap);
 
 
-
-
-
-
-// add a block will display a button that can switch the components
-
-
-
-
 //// Non-Data Handling Helpers
+function normalize(value, min, max) {
+  return (value - min) / (max - min);
+}
+
+function roundToDecimal(number, decimalPlaces) {
+  const factor = 10 ** decimalPlaces;
+  return parseFloat((Math.round(number * factor) / factor).toFixed(decimalPlaces));
+}
+
+//change this to be a value and a type of pollutant
+function getColor(value, pollutant) {
 
 
-function getColor(co2Value) {
-
-  const color1 = [0, 31, 102];  // dark blue
-  const color2 = [229, 237, 255];  // light blue
-
-  if(co2Value == -1) {
-    return `#DCDCDC`};
+  // add an if statement that changes the color and scale values based on the color
+  let color1, color2, percent;
 
 
-  const percent = 1 - (co2Value - 400) / 200;
+  if(pollutant == 'co2') {
+    color1 = [0, 31, 102];  // dark blue
+    color2 = [229, 237, 255];  // light blue
+    percent = 1 - (value - 350) / 200;
+
+    
+  } else if (pollutant == 'co') {
+    color1 = [234, 255, 236];
+    color2 =  [0,100,0];
+    percent = normalize(value, 0, 0.4); // Normalizing to [0, 1]
+  }
+  
+
+
+  if(value == -1) {
+    return `#F5F5F5`};
 
 
   const color = [
@@ -84,10 +97,10 @@ function getColor(co2Value) {
 }
 
 // condenses the data by calculating the average
-function processData(datetime, co2_corrected, chunkSize) {
+function processData(datetime, correctPollutant, chunkSize) {
 
   const dates = datetime.map(date => new Date(date));
-  const data = dates.map((date, i) => ({ date, co2: co2_corrected[i] }));
+  const data = dates.map((date, i) => ({ date, pollutant: correctPollutant[i] }));
 
   data.sort((a, b) => a.date - b.date);
 
@@ -95,34 +108,50 @@ function processData(datetime, co2_corrected, chunkSize) {
  
 
   const processedData = chunkedData.map(chunk => {
-    const avgCO2 = _.meanBy(chunk, 'co2');
+    const avgPollutant = _.meanBy(chunk, 'pollutant');
     const avgDate = chunk[Math.floor(chunk.length / 2)].date;
     const pcDate = avgDate.toISOString().slice(0, 19).replace('T', ' ');
-    return { date: pcDate, co2: avgCO2 };
+    return { date: pcDate, pollutant: avgPollutant};
   });
   
   let processedDatetime = processedData.map(d => d.date);
-  const processedCO2 = processedData.map(d => d.co2);
-  return { processedDatetime, processedCO2 };
+  const processedPollutant = processedData.map(d => d.co2);
+  return { processedDatetime, processedPollutant };
 }
 
 
 // Async Helpers
-
-async function makeChart(data,timeRange) {
-
+async function makeChart(data,timeRange,pollutant) {
 
 
-  const filteredData = await data.filter(d => d.co2_corrected !== -1);
-  const datetime = await filteredData.map(d => d.datetime);
-  const co2_corrected = await filteredData.map(d => d.co2_corrected);
+  let filteredData, datetime, pollutant_corrected,measurement;
 
+
+
+  //TODO: Change this to depend on the pollutant
+  if (pollutant == 'co2') {
+    filteredData = await data.filter(d => d.co2_corrected !== -1);
+    datetime = await filteredData.map(d => d.datetime);
+    pollutant_corrected = await filteredData.map(d => d.co2_corrected);
+    measurement = ' (ppm) </p>';
+
+
+  }else if (pollutant == 'co') {
+    filteredData = await data.filter(d => d.co_wrk_aux !== -1);
+    datetime = await filteredData.map(d => d.datetime);
+    pollutant_corrected = await filteredData.map(d => d.co_wrk_aux);
+    measurement = ' (V) </p>';
+    
+
+  }
+
+  console.log("These are the corrected pollutants", pollutant_corrected);
 
 
   // Need to retructure this
-  if (co2_corrected.length === 0) {
+  if (pollutant_corrected.length === 0) {
     pollValue.innerHTML = '<p>Not Available</p>';
-    let color = getColor(0);
+    let color = getColor(0,pollutant);
     pollMarker.innerHTML = "<span class='dot' style='background-color: " + color + ";'></span>";
     //make chart display nothing
     chart.style.display = 'none';
@@ -131,38 +160,53 @@ async function makeChart(data,timeRange) {
   } else{
     chart.style.display = 'block';
     noChart.innerHTML = '';
-    let sum = co2_corrected.reduce((a, b) => a + b, 0);
-    let avg = sum / co2_corrected.length;
-    avg = Math.round(avg * 10) / 10;
+    let sum = pollutant_corrected.reduce((a, b) => a + b, 0);
+    let avg = sum / pollutant_corrected.length;
+    avg = (avg * 10) / 10;
     let stringAvg = avg.toString();
-    pollValue.innerHTML = '<p>' + stringAvg + ' (ppm) </p>';
+    pollValue.innerHTML = '<p>' + stringAvg + measurement;
 
     // generate color based the average for that node
-    let color = getColor(avg);
+    let color = getColor(avg,pollutant);
 
     pollMarker.innerHTML = "<span class='dot' style='background-color: " + color + ";'></span>";
   }
 
   let processedDatetime = datetime;
-  let processedCo2 = co2_corrected;
+  let processedPollutant = pollutant_corrected;
   let xaxisTik = ''
 
+  
+  let textTitle, textTitleMeasure, chartColor,adjustRange;
 
-  if(timeRange == 'day') {
-    pollName.innerHTML = '<p>CO<sub>2</sub> Daily</p>';
-  } else if (timeRange == 'week'){
-    pollName.innerHTML = '<p>CO<sub>2</sub> Weekly</p>';
+  if (pollutant == 'co') {
+    textTitle = 'CO';
+    textTitleMeasure = 'CO (V)';
+    chartColor = 'DarkGreen';
+    adjustRange = 0.01;
+    
   }
-  else if (timeRange == 'month') {
-    pollName.innerHTML = '<p>CO<sub>2</sub> Monthly</p>';
+  else if (pollutant == 'co2') {
+    textTitle = 'CO<sub>2</sub>';
+    textTitleMeasure = 'CO<sub>2</sub> (ppm)';
+    chartColor = 'DarkBlue';
+    adjustRange = 10;
+  }
 
+
+  if (timeRange == 'day') {
+    pollName.innerHTML = `<p>${textTitle} Daily</p>`;
+  } else if (timeRange == 'week') {
+    pollName.innerHTML = `<p>${textTitle} Weekly</p>`;
+  } else if (timeRange == 'month') {
+    pollName.innerHTML = `<p>${textTitle} Monthly</p>`;
   } else if (timeRange == 'all') {
-    pollName.innerHTML = '<p>CO<sub>2</sub> All</p>';
+    pollName.innerHTML = `<p>${textTitle} All</p>`;
   }
 
   // display the data based on type
 
-  //TODO: this is not working
+  // Note change month to week 
   if (timeRange == 'day') {
     xaxisTik = '%H:%M';
   } else if (timeRange == 'week' || timeRange == 'month') { 
@@ -172,41 +216,42 @@ async function makeChart(data,timeRange) {
   }
 
 
-  // scaling fer amounts of data
-    if (co2_corrected.length > 120) {
+  //TODO: Change this to depend on the pollutant
+
+    if (pollutant_corrected.length > 120) {
       let chunkSize = 8;
-      if (co2_corrected.length> 400){
+      if (pollutant_corrected.length> 400){
         chunkSize = 40;
       }
       
-      if (co2_corrected.length > 1000) {
+      if (pollutant_corrected.length > 1000) {
         chunkSize = 200;
       }
 
-      const { processedDatetime: pd, processedCO2: pc } = processData(datetime, co2_corrected, chunkSize);
+      const { processedDatetime: pd, processedPollutant: pc } = processData(datetime,pollutant_corrected, chunkSize);
       processedDatetime = pd;
-      processedCo2 = pc;
+      processedPollutant = pc;
     
     }
 
-  // Create a trace for the CO2 values
-  const co2Trace = {
+  // Create a trace for the Pollutant values
+  const pollutantTrace = {
     x: processedDatetime,
-    y: processedCo2,
+    y: processedPollutant,
     type: 'scatter',
     mode: 'lines+markers',
-    name: 'CO<sub>2</sub>',
+    name: textTitleMeasure,
     yaxis: 'y',
     line: {
-      color: 'darkblue',
+      color: chartColor,
       width: 3
     },
     hoverinfo: 'none'
   };
 
   // make the bound be the largest value of y + 10 and the largest value of y - 10
-  yLowBound = Math.min(...processedCo2) - 10;
-  yHighBound = Math.max(...processedCo2) + 10;
+  yLowBound = Math.min(...processedPollutant) - adjustRange;
+  yHighBound = Math.max(...processedPollutant) + adjustRange;
 
 
   // Define the layout with two y-axes
@@ -218,7 +263,7 @@ async function makeChart(data,timeRange) {
       zeroline: true,
       fixedrange: true,
       title: {
-        text: 'CO<sub>2</sub> (ppm)',
+        text: textTitleMeasure,
         font: {
           size: 10},
       }
@@ -226,7 +271,7 @@ async function makeChart(data,timeRange) {
     height: 350,
     xaxis: {
       showline: true,
-      tickformat: '%d %H:%M',
+      tickformat: '%m/%d %H:%M',
     },
     
     margin: {
@@ -238,7 +283,7 @@ async function makeChart(data,timeRange) {
   };
 
   // Combine the traces and layout and plot the chart
-  const datas = [co2Trace];
+  const datas = [pollutantTrace];
   Plotly.newPlot('chart', datas, layout, {staticPlot: true});
 
 }
@@ -254,19 +299,151 @@ async function getTimeSeriesData(node, timeLine) {
     return response.data;
 }
 
+// Step 1: Default Pollutant
+let selectedPollutant = 'co2';
 
-async function updateMainData() {
+function updatePollutant(div) {
+ 
+  //buttons
+  const gradientDiv = div.querySelector('#gradient-div');
+  const radioCO = div.querySelector('#co-option');
+  const radioCO2 = div.querySelector('#co2-option');
+  const maxValue = div.querySelector('#max-value');
+  const minValue = div.querySelector('#min-value');
+
+  
+  if (radioCO2.checked) {
+    console.log('co2 checked');
+
+    // changing the legend 
+    gradientDiv.style.background = "linear-gradient(to bottom, rgb(0, 31, 102), rgb(39, 74, 146), rgb(77, 117, 190), rgb(115, 160, 234), rgb(153, 187, 244), rgb(191, 213, 253), rgb(214, 226, 255), rgb(229, 237, 255))";
+    maxValue.innerHTML = '600 ppm';
+    minValue.innerHTML = '350 ppm';
+    selectedPollutant = 'co2';
+
+    //changing the chart
+    closeButton.style.backgroundImage = "url('./icons/cross_png_clean.png')";
+    NetworkName.style.backgroundImage = "url('./icons/breathe_icon.png')";
+    ChartTitle.innerHTML =  "Average CO<sub>2</sub> Levels";
+    
+
+
+
+
+    
+
+  } else if (radioCO.checked) {
+    console.log('co checked');
+
+    //changing the legend 
+    gradientDiv.style.background = "linear-gradient(to bottom,rgb(0,100,0), rgb(116, 150, 113), rgb(143, 188, 139), rgb(209, 242, 206), rgb(236, 252, 235))";
+    maxValue.innerHTML = '0.4 V';
+    minValue.innerHTML = '0 V';
+    selectedPollutant = 'co';
+
+   //changing the chart
+   closeButton.style.backgroundImage = "url('./icons/cross_green_clean.png')";  
+   NetworkName.style.backgroundImage = "url('./icons/breathe_icon_green.png')";
+   ChartTitle.innerHTML =  "Average CO Levels";
+   
+
+
+
+  }
+  makeMap(selectedPollutant);
+  console.log(NetworkName);
+  console.log("Updates requested for: ", selectedPollutant);
+}
+
+
+
+class LegendControl extends L.Control {
+  // Define the onAdd method
+  onAdd() {
+      const div = L.DomUtil.create('div', 'legend');
+      div.style.backgroundColor = "white";
+      div.style.padding = "6px";
+      div.style.borderRadius = "6px";
+      div.style.width = "max-content";
+      div.style.position = "absolute";
+      div.style.right = "620px";
+      div.style.top = "450px";
+      div.style.fontSize = "14px";
+      div.innerHTML =  `
+      <div>
+        <b>Legend</b>
+        <br>
+        Date: ${date}
+        <br>
+        Time: ${time}
+        <br>
+        <b>Pollutants:</b>
+        <ul style="list-style: none; margin: 0; padding: 0"">
+          <li>
+            <input type="radio" id="co-option" name="selector" onchange="updatePollutant(this.parentElement.parentElement.parentElement)">
+            <label for="f-option">CO</label>
+          </li>
+          <li>
+            <input type="radio" id="co2-option" name="selector" checked="checked" onchange="updatePollutant(this.parentElement.parentElement.parentElement)">
+            <label for="s-option">CO<sub>2</sub></label>
+          </li>
+        </ul>
+          <b>Concentration(ppm):</b>
+          <br>
+          <div id="max-value" style="height: 20px;">600 ppm </div>
+          <div id="gradient-div" style="display:inline-block; width: 20px; height: 120px; background: linear-gradient(to bottom, rgb(0, 31, 102), rgb(39, 74, 146), rgb(77, 117, 190), rgb(115, 160, 234), rgb(153, 187, 244), rgb(191, 213, 253), rgb(214, 226, 255), rgb(229, 237, 255));;"></div>
+          <br>
+          <div id="min-value" style="height: 20px;">350 ppm </div>
+          </div>
+      </div>`;
+
+    
+
+
+      return div;
+  }
+}
+
+const legendControl = new LegendControl();
+
+// Add the custom control to the map
+mymap.addControl(legendControl);
+
+
+
+async function updateMainData(pollutant) {
   //maybe add a trigger for new data here
-  const response = await axios.get('/main_data');
+  console.log("Making a request for this pollutant: " + pollutant)
+  const response = await axios.get('/main_data', {
+    params: {
+      pollutant_type: pollutant
+    }
+  });
   return response.data;
 
 }
 
 
-async function makeMap() { 
-  let coordinates = await updateMainData();
+//make the pollutant be passed in 
+async function makeMap(pollutant) { 
 
-  console.log(coordinates);
+  let pollutantName, measurement,measurementName;
+
+  if (pollutant == "co2") {
+    var coordinates = await updateMainData("co2");
+    pollutantName = "co2_corrected";
+    measurement = " (ppm)";
+    measurementName = "CO<sub>2</sub>";
+  } else if (pollutant == "co") {
+    var coordinates = await updateMainData("co");
+    console.log(coordinates);
+    pollutantName = "co_wrk_aux";
+    measurement = " (V)";
+    measurementName = "CO";
+
+
+  }
+  
 
   let fullData = coordinates;
  
@@ -278,7 +455,7 @@ async function makeMap() {
   for (let i = 0; i < coordinates.length; i++) {
       const lat = coordinates[i]["Latitude"];
       const lon = coordinates[i]["Longitude"];
-      let color = getColor(coordinates[i]["co2_corrected"]);
+      let color = getColor(coordinates[i][pollutantName], pollutant);
  
 
     let circleMarker = L.circleMarker([lat, lon], {
@@ -289,16 +466,19 @@ async function makeMap() {
     fillOpacity: 0.8
   });
 
+  console.log(coordinates[i][pollutantName])
+
   
   // TODO: Revise this part
-  if(coordinates[i]["co2_corrected"] == -1) {
-    circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO<sub>2</sub> Level: Not Available");
+  if(coordinates[i][pollutantName] == -1) {
+    //TODO: Change this include other things about the pollutant
+    circleMarker.bindPopup("Location: " + roundToDecimal(coordinates[i]["Location"]) + "<br>" + measurementName + " Level: Not Available");
   }else{
-    circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO<sub>2</sub> Level: " + coordinates[i]["co2_corrected"] + " (ppm) ");
+    circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + measurementName + " Level: " + coordinates[i][pollutantName] + measurement);
   }
   circleMarker.addTo(mymap);
   
-
+  //TODO: Change all these for the map as well
   circleMarker.on('click', function(event) {
     if (sidebar) {
       // make it visable 
@@ -329,7 +509,7 @@ async function makeMap() {
 
 
       // display this since day is the default
-      makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]));
+      makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]), "day", selectedPollutant);
       
 
     }
@@ -337,55 +517,10 @@ async function makeMap() {
     
 }}
 
-class LegendControl extends L.Control {
-  // Define the onAdd method
-  onAdd() {
-      const div = L.DomUtil.create('div', 'legend');
-      div.style.backgroundColor = "white";
-      div.style.padding = "6px";
-      div.style.borderRadius = "6px";
-      div.style.width = "max-content";
-      div.style.position = "absolute";
-      div.style.right = "620px";
-      div.style.top = "450px";
-      div.style.fontSize = "14px";
-      div.innerHTML =  `
-      <div>
-        <b>Legend</b>
-        <br>
-        Date: ${date}
-        <br>
-        Time: ${time}
-        <br>
-        <b>Pollutants:</b>
-        <ul style="list-style: none; margin: 0; padding: 0"">
-          <li>
-            <input type="radio" id="f-option" name="selector">
-            <label for="f-option">CO</label>
-          </li>
-          <li>
-            <input type="radio" id="s-option" name="selector">
-            <label for="s-option">CO<sub>2</sub></label>
-          </li>
-        </ul>
-          <b>Concentration(ppm):</b>
-          <br>
-          <div style="height: 20px;">600 ppm </div>
-          <div style="display:inline-block; width: 20px; height: 120px; background: linear-gradient(to bottom, rgb(0, 31, 102), rgb(39, 74, 146), rgb(77, 117, 190), rgb(115, 160, 234), rgb(153, 187, 244), rgb(191, 213, 253), rgb(214, 226, 255), rgb(229, 237, 255));;"></div>
-          <br>
-          <div style="height: 20px;">400 ppm </div>
-          </div>
-      </div>`;
-      return div;
-  }
-}
-
-const legendControl = new LegendControl();
-
-// Add the custom control to the map
-mymap.addControl(legendControl);
-
-makeMap();
+// TODO: Change this to be the currently working code
+// would have to keep the pollutant as global variable?
+console.log("Pollutant:", selectedPollutant);
+makeMap(selectedPollutant);
 
 
 // Function to calculate the time until the next straight hour
@@ -406,7 +541,7 @@ function scheduleDataUpdate() {
   console.log("Scheduling update in", timeUntilNext + delay, "milliseconds");
   
   setTimeout(() => {
-    makeMap();
+    makeMap(selectedPollutant);
     setInterval(processData, 3600000); // Schedule subsequent updates every hour
     console.log("Update successful!");
   }, timeUntilNext + delay);

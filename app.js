@@ -15,7 +15,8 @@ app.get('/', (req, res) => {
 //end-point for the main data 
 app.get('/main_data', async (req, res) => {
   try {
-    const data = await getMainData();
+    const { pollutant_type} = req.query;
+    const data = await getMainData(pollutant_type);
     res.send(data);
     // add the current time it was sent
     console.log("Data Sent at " + new Date().toLocaleString());
@@ -26,9 +27,9 @@ app.get('/main_data', async (req, res) => {
 
 
 // retrieving the promise from the backend
-async function getMainData() {
+async function getMainData(pollutant_type) {
   return new Promise((resolve, reject) => {
-    const updateScript = spawn('python3', ['data/update_pollutants.py']);
+    const updateScript = spawn('python3', ['data/update_pollutants.py', pollutant_type]);
 
     let stdout = ''; 
 

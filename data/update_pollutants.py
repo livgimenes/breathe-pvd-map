@@ -14,8 +14,17 @@ import requests
 import json
 import pytz
 import time
+import sys
 
 ################# 
+
+
+###Receiving incoming arguments
+
+
+pollutant = str(sys.argv[1])
+# pollutant = "co"
+
 
 
 ### Global variable for failed requests
@@ -118,33 +127,34 @@ def pst_to_est(pst_time_str):
 
 
 
-def clean_data(data):
+def clean_data(data, pollutant):
   """Cleans the panda dataframe removing missing data, drops unecessary columns and tranforms data from pst to est"""
 
   #drop unecessary columns
+  data = data.drop(columns=['epoch','datetime',"node_file_id"])
 
   ###TODO: change this to be using local_timestamp instead of datetime
 
-  data = data.drop(columns=['epoch','datetime',"node_file_id"])
+  #for each pollutant gettin rid of missing data, renaming
+  if pollutant == "co2":
+    data = data.rename(columns={'co2_corrected_avg_t_drift_applied': 'co2_corrected'})
+    data = data.replace({"co2_corrected": {-999.00000: np.nan}})
+    data = data.dropna(subset=['local_timestamp', "co2_corrected"])
+    data["co2_corrected"] = data["co2_corrected"].map(lambda x: round(x))
 
-  #remove missing data, -999
-  data = data.replace({'co2_corrected_avg_t_drift_applied': {-999.00000: np.nan}})
-  data = data.dropna(subset=['local_timestamp', 'co2_corrected_avg_t_drift_applied'])
+  elif pollutant == "co":
+    data = data.replace({"co_wrk_aux": {-999.00000: np.nan}})
+    data = data.dropna(subset=['local_timestamp', "co_wrk_aux"])
 
-  #round to no decimals
-  data['co2_corrected_avg_t_drift_applied'] = data['co2_corrected_avg_t_drift_applied'].map(lambda x: round(x))
 
   #change time zones, make it display in actual est time
   data['local_timestamp'] = data['local_timestamp'].map(lambda x: pst_to_est(x))
-
 
   #make the datetime be a string and not include -08:00
   data['local_timestamp'] = data['local_timestamp'].map(lambda x: str(x)[0:19])
 
   #rename local_timestamp to datetime
   data = data.rename(columns={'local_timestamp': 'datetime'})
-
-  
 
   return data
 
@@ -190,14 +200,16 @@ def convert_final():
     end_date = str(curr_time)[0:10]
     end_time = str(curr_time)[11:19] 
 
-
-    variable = "co2_corrected_avg_t_drift_applied,temp"
+    if pollutant == "co2":
+      VARIABLE = "co2_corrected_avg_t_drift_applied,temp"
+    elif pollutant == "co":
+      VARIABLE = "co_wrk_aux"
+      
 
    
-    data = clean_data(get_data(sensors_df,start_date, end_date, variable, start_time, end_time))
+    data = clean_data(get_data(sensors_df,start_date, end_date, VARIABLE, start_time, end_time),pollutant)
 
 
-    data = data.rename(columns={'co2_corrected_avg_t_drift_applied': 'co2_corrected'})
     data.sort_values(by='datetime', ascending=True, inplace=True)
 
     #maybe add these late

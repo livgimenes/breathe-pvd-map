@@ -16,8 +16,8 @@ import numpy as np
 # node = int(sys.argv[1])
 # date = sys.argv[2]
 
-node = 264
-date = "all"
+# node = 264
+# date = "all"
 
 
 
