@@ -23,7 +23,7 @@ import sys
 
 
 pollutant = str(sys.argv[1])
-# pollutant = "co"
+# pollutant = "co2"
 
 
 
@@ -228,7 +228,7 @@ def convert_final():
     print_comb = combined_data.to_json(orient='records')
 
     #save failed logs
-    store_failed_requests(combined_data)
+    # store_failed_requests(combined_data)
     
 
     #save as csv 

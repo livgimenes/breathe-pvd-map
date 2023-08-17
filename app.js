@@ -59,29 +59,36 @@ async function getMainData(pollutant_type) {
 // fetching and returning the data from the timeseries
 app.get('/timeseries', (req, res) => {
   console.log(req.query);
-  const { nodeId, date } = req.query;
-  const timeseriesScript = spawn('python3', ['data/get_timeseries.py', nodeId, date]);
+  const { nodeId, date, pollutant } = req.query;
+  console.log(nodeId, date, pollutant)
+  const timeseriesScript = spawn('python3', ['data/get_timeseries.py', nodeId, date, pollutant]);
 
   let stdout = '';
+  let stderr = '';
+
   timeseriesScript.stdout.on('data', data => {
     stdout += data.toString();
   });
 
-
   timeseriesScript.stderr.on('data', err => {
-    res.status(500).send(err.toString());
+    stderr += err.toString(); // Collect the error message
   });
 
   timeseriesScript.on('close', code => {
+    console.log(code);
 
     if (code === 0) {
       res.send(stdout);
-      console.log(stdout);
     } else {
-      res.status(500).send(`Python script exited with code ${code}`);
+      if (stderr) {
+        res.status(500).send(stderr); // Send the error response
+      } else {
+        res.status(500).send(`Python script exited with code ${code}`);
+      }
     }
   });
 });
+
 
 
 

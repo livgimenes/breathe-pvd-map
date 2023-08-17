@@ -13,11 +13,15 @@ import numpy as np
 
 #### REAL DATA
 
-# node = int(sys.argv[1])
-# date = sys.argv[2]
+node = int(sys.argv[1])
+date = sys.argv[2]
+pollutant = sys.argv[3]
+
+   
 
 # node = 264
 # date = "all"
+# pollutant = "co"
 
 
 
@@ -121,17 +125,20 @@ def clean_data(data):
   # if empty just return the data frame
   if data.empty:
     return data
-
+  
   #drop unecessary columns
   data = data.drop(columns=['epoch',"node_file_id"])
-  #TODO: change this to use localtime instead of datetime
+  
+  #renaming and dropping null for respective pollutants
+  if pollutant == "co2":
+    data = data.rename(columns={'co2_corrected_avg_t_drift_applied': 'co2_corrected'})
+    data = data.replace({"co2_corrected": {-999.00000: np.nan}})
+    data = data.dropna(subset=['local_timestamp', "co2_corrected"])
+    data["co2_corrected"] = data["co2_corrected"].map(lambda x: round(x))
 
-  data = data.replace({'co2_corrected_avg_t_drift_applied': {-999.00000: np.nan}})
-  data = data.dropna(subset=['datetime',"local_timestamp", 'co2_corrected_avg_t_drift_applied'])
-
-  #round to no decimals
-  data['co2_corrected_avg_t_drift_applied'] = data['co2_corrected_avg_t_drift_applied'].map(lambda x: round(x))
-
+  elif pollutant == "co":
+    data = data.replace({"co_wrk_aux": {-999.00000: np.nan}})
+    data = data.dropna(subset=['local_timestamp', "co_wrk_aux"])
 
   #change time zones, make it display in actual est time
   data['local_timestamp'] = data['local_timestamp'].map(lambda x: pst_to_est(x))
@@ -145,8 +152,6 @@ def clean_data(data):
   #rename the local_timestamp column to be datetime
   data = data.rename(columns={'local_timestamp': 'datetime'})
   
-
-  data = data.rename(columns={'co2_corrected_avg_t_drift_applied': 'co2_corrected'})
 
   return data
 
@@ -166,9 +171,17 @@ def generate_data(date,node,sensor_data):
     start_time = str(start_range)[11:19]
     end_time = str(end_range)[11:19]
 
-    variable = "co2_corrected_avg_t_drift_applied"
+    variable = ""
 
-    data = get_data(node,sensor_data, start_date, end_date, variable, start_time, end_time)
+    if pollutant == "co":
+       variable = "co_wrk_aux"
+    elif pollutant == "co2":
+        variable = "co2_corrected_avg_t_drift_applied"
+    else:
+       print("Error: no pollutant passed in")
+
+
+    data = get_data(node,sensor_data, start_date, end_date,variable, start_time, end_time)
 
     data = clean_data(data)
 
@@ -179,6 +192,13 @@ def generate_data(date,node,sensor_data):
 print(generate_data(date,node,sensor_data).to_json(orient='records'))
 
 
+# sensor_data = pd.read_csv("data/sensors_with_nodes.csv")
+# node_list = list(sensor_data["Node ID"])
+# for i in range(len(node_list)):
+#     for date in ["week","month","all"]:
+#         node = node_list[i]
+#         date = "all"
+#         print(generate_data(date,node,sensor_data))
 
 
 
