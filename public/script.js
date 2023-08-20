@@ -99,8 +99,6 @@ function getColor(value, pollutant) {
 // condenses the data by calculating the average
 function processData(datetime, correctPollutant, chunkSize) {
 
-  console.log(correctPollutant);
-
   const dates = datetime.map(date => new Date(date));
   const data = dates.map((date, i) => ({ date, pollutant: correctPollutant[i] }));
 
@@ -116,48 +114,53 @@ function processData(datetime, correctPollutant, chunkSize) {
     return { date: pcDate, pollutant: avgPollutant};
   });
 
-  console.log(processedData);
-
   
   let processedDatetime = processedData.map(d => d.date);
   const processedPollutant = processedData.map(d => d.pollutant);
 
-  console.log(processedPollutant);
   return { processedDatetime, processedPollutant };
 }
 
 
-// Async Helpers
 async function makeChart(data,timeRange,pollutant) {
 
-  console.log(data);
+  //variable for functions
+  let filteredData, datetime, pollutant_corrected,roundPollutantBy;
+  
+  // variablesfor styling and chart
+  let textTitle, textTitleMeasure, chartColor,adjustRange,measurement;
 
-
-  let filteredData, datetime, pollutant_corrected,measurement;
-
-
-
-  //TODO: Change this to depend on the pollutant
+  // setting variables based on pollutant
   if (pollutant == 'co2') {
     filteredData = await data.filter(d => d.co2_corrected !== -1);
     datetime = await filteredData.map(d => d.datetime);
     pollutant_corrected = await filteredData.map(d => d.co2_corrected);
     measurement = ' (ppm) </p>';
+    roundPollutantBy = 0;
+
+    textTitle = 'CO<sub>2</sub>';
+    textTitleMeasure = 'CO<sub>2</sub> (ppm)';
+    chartColor = 'DarkBlue';
+    adjustRange = 10;
 
 
   }else if (pollutant == 'co') {
     filteredData = await data.filter(d => d.co_wrk_aux !== -1);
     datetime = await filteredData.map(d => d.datetime);
     pollutant_corrected = await filteredData.map(d => d.co_wrk_aux);
+
     measurement = ' (V) </p>';
+    roundPollutantBy = 3;
+    textTitle = 'CO';
+    textTitleMeasure = 'CO (V)';
+    chartColor = 'DarkGreen';
+    adjustRange = 0.01;
     
 
   }
 
-  console.log("These are the corrected pollutants", pollutant_corrected);
 
-
-  // Need to retructure this
+  // Accounting for null data + styling
   if (pollutant_corrected.length === 0) {
     pollValue.innerHTML = '<p>Not Available</p>';
     let color = getColor(0,pollutant);
@@ -172,6 +175,7 @@ async function makeChart(data,timeRange,pollutant) {
     let sum = pollutant_corrected.reduce((a, b) => a + b, 0);
     let avg = sum / pollutant_corrected.length;
     avg = (avg * 10) / 10;
+    avg = avg.toFixed(roundPollutantBy);
     let stringAvg = avg.toString();
     pollValue.innerHTML = '<p>' + stringAvg + measurement;
 
@@ -185,24 +189,8 @@ async function makeChart(data,timeRange,pollutant) {
   let processedPollutant = pollutant_corrected;
   let xaxisTik = ''
 
+
   
-  let textTitle, textTitleMeasure, chartColor,adjustRange;
-
-  if (pollutant == 'co') {
-    textTitle = 'CO';
-    textTitleMeasure = 'CO (V)';
-    chartColor = 'DarkGreen';
-    adjustRange = 0.01;
-    
-  }
-  else if (pollutant == 'co2') {
-    textTitle = 'CO<sub>2</sub>';
-    textTitleMeasure = 'CO<sub>2</sub> (ppm)';
-    chartColor = 'DarkBlue';
-    adjustRange = 10;
-  }
-
-
   if (timeRange == 'day') {
     pollName.innerHTML = `<p>${textTitle} Daily</p>`;
   } else if (timeRange == 'week') {
@@ -213,21 +201,18 @@ async function makeChart(data,timeRange,pollutant) {
     pollName.innerHTML = `<p>${textTitle} All</p>`;
   }
 
-  // display the data based on type
 
-  // Note change month to week 
+  //Styling the chart display
   if (timeRange == 'day') {
-    xaxisTik = '%H:%M';
+    xaxisTik = '%m/%d %H:%M';
   } else if (timeRange == 'week' || timeRange == 'month') { 
     xaxisTik = '%m-%d';
   } else if (timeRange == 'all') { 
     xaxisTik = '%Y-%m-%d';
   }
 
-
-  //TODO: Change this to depend on the pollutant
-
-    if (pollutant_corrected.length > 120) {
+// condensing datapoints
+if (pollutant_corrected.length > 120) {
       let chunkSize = 8;
       if (pollutant_corrected.length> 400){
         chunkSize = 40;
@@ -243,7 +228,6 @@ async function makeChart(data,timeRange,pollutant) {
     
     }
 
-    console.log("This is the processed pollutant", processedPollutant);
 
 
   // Create a trace for the Pollutant values
@@ -261,7 +245,7 @@ async function makeChart(data,timeRange,pollutant) {
     hoverinfo: 'none'
   };
 
-  // make the bound be the largest value of y + 10 and the largest value of y - 10
+  // creating bounds and ranges for the axis 
   yLowBound = Math.min(...processedPollutant) - adjustRange;
   yHighBound = Math.max(...processedPollutant) + adjustRange;
 
@@ -278,12 +262,19 @@ async function makeChart(data,timeRange,pollutant) {
         text: textTitleMeasure,
         font: {
           size: 10},
+      },
+      tickfont:{
+        size: 10,
+
       }
     },
     height: 350,
     xaxis: {
       showline: true,
-      tickformat: '%m/%d %H:%M',
+      tickformat: xaxisTik,
+      tickfont: {
+        size: 9,      
+      }
     },
     
     margin: {
@@ -306,7 +297,6 @@ let selectedPollutant = 'co2';
 
 
 async function getTimeSeriesData(node, timeLine, pollutant) {
-  console.log("This is the pollutant", pollutant)
     const response = await axios.get('/timeseries', {
       params: {
         nodeId: node,
@@ -326,6 +316,7 @@ function updatePollutant(div) {
   const radioCO2 = div.querySelector('#co2-option');
   const maxValue = div.querySelector('#max-value');
   const minValue = div.querySelector('#min-value');
+  const concentrationDef = div.querySelector('#concentration-tag');
 
   
   if (radioCO2.checked) {
@@ -342,6 +333,7 @@ function updatePollutant(div) {
     NetworkName.style.backgroundImage = "url('./icons/breathe_icon.png')";
     ChartTitle.innerHTML =  "Average CO<sub>2</sub> Levels";
     loader.style.borderTop = '8px solid darkblue';
+    concentrationDef.innerHTML = '<b> Concentration (ppm):<b>';
     
 
   } else if (radioCO.checked) {
@@ -358,10 +350,10 @@ function updatePollutant(div) {
    NetworkName.style.backgroundImage = "url('./icons/breathe_icon_green.png')";
    ChartTitle.innerHTML =  "Average CO Levels";
    loader.style.borderTop = '8px solid darkgreen';
+   concentrationDef.innerHTML = '<b> Concentration (V):<b>';
 
   }
   makeMap(selectedPollutant);
-  console.log(NetworkName);
   console.log("Updates requested for: ", selectedPollutant);
 }
 
@@ -376,7 +368,7 @@ class LegendControl extends L.Control {
       div.style.borderRadius = "6px";
       div.style.width = "max-content";
       div.style.position = "absolute";
-      div.style.right = "620px";
+      div.style.right = "610px";
       div.style.top = "450px";
       div.style.fontSize = "14px";
       div.innerHTML =  `
@@ -398,12 +390,14 @@ class LegendControl extends L.Control {
             <label for="s-option">CO<sub>2</sub></label>
           </li>
         </ul>
-          <b>Concentration (ppm):</b>
+          <div id="concentration-tag"><b>Concentration (ppm):</b> </div>
           <br>
+          <div style="display: inline-block; vertical-align: top; margin-top: -20px;">
           <div id="max-value" style="height: 20px;">600 ppm </div>
           <div id="gradient-div" style="display:inline-block; width: 20px; height: 120px; background: linear-gradient(to bottom, rgb(0, 31, 102), rgb(39, 74, 146), rgb(77, 117, 190), rgb(115, 160, 234), rgb(153, 187, 244), rgb(191, 213, 253), rgb(214, 226, 255), rgb(229, 237, 255));;"></div>
           <br>
           <div id="min-value" style="height: 20px;">350 ppm </div>
+          </div>
           </div>
       </div>`;
 
@@ -423,7 +417,6 @@ mymap.addControl(legendControl);
 
 async function updateMainData(pollutant) {
   //maybe add a trigger for new data here
-  console.log("Making a request for this pollutant: " + pollutant)
   const response = await axios.get('/main_data', {
     params: {
       pollutant_type: pollutant
@@ -437,19 +430,21 @@ async function updateMainData(pollutant) {
 //make the pollutant be passed in 
 async function makeMap(pollutant) { 
 
-  let pollutantName, measurement,measurementName;
+  let pollutantName, measurement,measurementName,roundPollutantBy;
 
   if (pollutant == "co2") {
     var coordinates = await updateMainData("co2");
     pollutantName = "co2_corrected";
     measurement = " (ppm)";
     measurementName = "CO<sub>2</sub>";
+    roundPollutantBy = 0;
+
   } else if (pollutant == "co") {
     var coordinates = await updateMainData("co");
-    console.log(coordinates);
     pollutantName = "co_wrk_aux";
     measurement = " (V)";
     measurementName = "CO";
+    roundPollutantBy = 3;
 
 
   }
@@ -476,15 +471,14 @@ async function makeMap(pollutant) {
     fillOpacity: 0.8
   });
 
-  console.log(coordinates[i][pollutantName])
-
+  let roundedPollutant = coordinates[i][pollutantName].toFixed(roundPollutantBy);
   
   // TODO: Revise this part
   if(coordinates[i][pollutantName] == -1) {
     //TODO: Change this include other things about the pollutant
-    circleMarker.bindPopup("Location: " + roundToDecimal(coordinates[i]["Location"]) + "<br>" + measurementName + " Level: Not Available");
+    circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + measurementName + " Level: Not Available");
   }else{
-    circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + measurementName + " Level: " + coordinates[i][pollutantName] + measurement);
+    circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + measurementName + " Level: " + roundedPollutant + measurement);
   }
   circleMarker.addTo(mymap);
   
@@ -522,46 +516,49 @@ async function makeMap(pollutant) {
       makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]), "day", selectedPollutant);
 
       timelineSelect.addEventListener('change', function() {
-        timeLine = timelineSelect.value;
-        if (timeLine == "day") {
-          makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]), "day", selectedPollutant);
-        } else if (timeLine == "week") {
+          timeLine = timelineSelect.value;
+          if (timeLine == "day") {
+            makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]), "day");
+          } else if (timeLine == "week") {
 
-          //activate loading
-          loader.style.display = 'block';
-          chart.style.display = 'none';
+            //activate loading
+            loader.style.display = 'block';
+            chart.style.display = 'none';
+            if (coordinates[i]["Node ID"] == -1) {
+              noChart.innerHTML = ''
+            }
 
 
-          getTimeSeriesData(coordinates[i]["Node ID"], "week",selectedPollutant).then(function(weekData) {
-            makeChart(weekData, "week", selectedPollutant);
-            loader.style.display = 'none';
-          });
+            getData(coordinates[i]["Node ID"], "week").then(function(weekData) {
+              makeChart(weekData, "week");
+              loader.style.display = 'none';
+            });
 
-        } else if (timeLine == "month") {
-          // // activate loading
-          loader.style.display = 'block';
-          chart.style.display = 'none';
+          } else if (timeLine == "month") {
 
-          getTimeSeriesData(coordinates[i]["Node ID"], "month",selectedPollutant).then(function(monthData) {
-            makeChart(monthData, "month", selectedPollutant);
-            loader.style.display = 'none';
-          });
+            // // activate loading
+            loader.style.display = 'block';
+            chart.style.display = 'none';
 
-        } else if (timeLine == "all") {
+            getData(coordinates[i]["Node ID"], "month").then(function(monthData) {
+              makeChart(monthData, "month");
+              loader.style.display = 'none';
+            });
 
-          // activate loading
-          loader.style.display = 'block';
-          chart.style.display = 'none';
+          } else if (timeLine == "all") {
 
-          getTimeSeriesData(coordinates[i]["Node ID"], "all",selectedPollutant).then(function(allData) {
-            makeChart(allData, "all", selectedPollutant);
-            loader.style.display = 'none';
-          });
+            // activate loading
+            loader.style.display = 'block';
+            chart.style.display = 'none';
 
-    
-        }
-      });
-      
+            getData(coordinates[i]["Node ID"], "all").then(function(allData) {
+              makeChart(allData, "all");
+              loader.style.display = 'none';
+            });
+
+          }
+        });
+
 
     }
   });
