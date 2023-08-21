@@ -33,7 +33,7 @@ var MonitorTimeEnd = document.getElementById("monitorTime2");
 var pollValue = document.getElementById("pollValue");
 var pollMarker = document.getElementById("pollMarker");
 var pollName = document.getElementById("pollName");
-var timelineSelect = document.getElementById('Timeline');
+var timelineSelect = document.getElementById('timeline-select');
 var loader = document.getElementById('loader');
 var noChart = document.getElementById('noChart');
 var chart = document.getElementById('chart');
@@ -130,6 +130,10 @@ async function makeChart(data,timeRange,pollutant) {
   // variablesfor styling and chart
   let textTitle, textTitleMeasure, chartColor,adjustRange,measurement;
 
+  console.log(data);
+  console.log(timeRange);
+  console.log(pollutant);
+
   // setting variables based on pollutant
   if (pollutant == 'co2') {
     filteredData = await data.filter(d => d.co2_corrected !== -1);
@@ -159,6 +163,7 @@ async function makeChart(data,timeRange,pollutant) {
 
   }
 
+  console.log(pollutant_corrected);
 
   // Accounting for null data + styling
   if (pollutant_corrected.length === 0) {
@@ -515,10 +520,11 @@ async function makeMap(pollutant) {
       // display this since day is the default
       makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]), "day", selectedPollutant);
 
+      // I want to make sure, it's the timeselect of that marker and not another timeselect
       timelineSelect.addEventListener('change', function() {
           timeLine = timelineSelect.value;
           if (timeLine == "day") {
-            makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]), "day");
+            makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]), "day", selectedPollutant);
           } else if (timeLine == "week") {
 
             //activate loading
@@ -529,8 +535,8 @@ async function makeMap(pollutant) {
             }
 
 
-            getData(coordinates[i]["Node ID"], "week").then(function(weekData) {
-              makeChart(weekData, "week");
+            getTimeSeriesData(coordinates[i]["Node ID"], "week",selectedPollutant).then(function(weekData) {
+              makeChart(weekData, "week", selectedPollutant);
               loader.style.display = 'none';
             });
 
@@ -540,8 +546,8 @@ async function makeMap(pollutant) {
             loader.style.display = 'block';
             chart.style.display = 'none';
 
-            getData(coordinates[i]["Node ID"], "month").then(function(monthData) {
-              makeChart(monthData, "month");
+            getTimeSeriesData(coordinates[i]["Node ID"], "month",selectedPollutant).then(function(monthData) {
+              makeChart(monthData, "month", selectedPollutant);
               loader.style.display = 'none';
             });
 
@@ -551,8 +557,8 @@ async function makeMap(pollutant) {
             loader.style.display = 'block';
             chart.style.display = 'none';
 
-            getData(coordinates[i]["Node ID"], "all").then(function(allData) {
-              makeChart(allData, "all");
+            getTimeSeriesData(coordinates[i]["Node ID"], "all",selectedPollutant).then(function(allData) {
+              makeChart(allData, "all", selectedPollutant);
               loader.style.display = 'none';
             });
 
