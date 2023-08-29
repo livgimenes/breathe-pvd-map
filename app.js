@@ -1,8 +1,5 @@
 const express = require('express');
 const { spawn } = require('child_process'); 
-const cors = require('cors');
-const axios = require('axios');
-const { get } = require('http');
 const app = express();
 
 app.use(express.static(__dirname + '/public'));
@@ -12,13 +9,12 @@ app.get('/', (req, res) => {
 });
 
 
-//end-point for the main data 
+//Retrieving the data for all of the nodes, depending on the pollutant type
 app.get('/main_data', async (req, res) => {
   try {
     const { pollutant_type} = req.query;
     const data = await getMainData(pollutant_type);
     res.send(data);
-    // add the current time it was sent
     console.log("Data Sent at " + new Date().toLocaleString());
   } catch (error) {
     res.status(500).json({ error: 'An error occurred while fetching data' });
@@ -26,7 +22,7 @@ app.get('/main_data', async (req, res) => {
 });
 
 
-// retrieving the promise from the backend
+// Helper function for the main_data
 async function getMainData(pollutant_type) {
   return new Promise((resolve, reject) => {
     const updateScript = spawn('python3', ['data/update_pollutants.py', pollutant_type]);
@@ -56,7 +52,7 @@ async function getMainData(pollutant_type) {
 }
 
 
-// fetching and returning the data from the timeseries
+//Retrieves data for a specific node given the timerange and pollutant type, used for the timeseries graph
 app.get('/timeseries', (req, res) => {
   console.log(req.query);
   const { nodeId, date, pollutant } = req.query;
@@ -90,8 +86,7 @@ app.get('/timeseries', (req, res) => {
 });
 
 
-
-
+// Spins up the server
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`Server started on port ${port}`);

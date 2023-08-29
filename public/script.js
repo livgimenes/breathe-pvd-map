@@ -432,34 +432,88 @@ async function updateMainData(pollutant) {
 }
 
 
-//make the pollutant be passed in 
-async function makeMap(pollutant) { 
+// plots the coordinates on the map function 
+function plotMarkers(coordinates, pollutant) {
+
+  const markerDictionary = {};
 
   let pollutantName, measurement,measurementName,roundPollutantBy;
 
+  //setting names
   if (pollutant == "co2") {
-    var coordinates = await updateMainData("co2");
     pollutantName = "co2_corrected";
     measurement = " (ppm)";
     measurementName = "CO<sub>2</sub>";
     roundPollutantBy = 0;
 
   } else if (pollutant == "co") {
-    var coordinates = await updateMainData("co");
     pollutantName = "co_wrk_aux";
     measurement = " (V)";
     measurementName = "CO";
     roundPollutantBy = 3;
-
-
   }
-  
+
+  const filteredCoordinates = coordinates.filter(obj => obj.datetime !== -1);
+  maxDatetime = filteredCoordinates.reduce((max, obj) => obj.datetime > max ? obj.datetime : max, "");
+
+
+  for (let i = 0; i < coordinates.length; i++) {
+    const lat = coordinates[i]["Latitude"];
+    const lon = coordinates[i]["Longitude"];
+    let color = getColor(coordinates[i][pollutantName], pollutant);
+
+
+    let circleMarker = L.circleMarker([lat, lon], {
+      radius: 8,
+      color: 'black',
+      weight: 1,
+      fillColor: color,
+      fillOpacity: 0.8
+    });
+
+    let roundedPollutant = coordinates[i][pollutantName].toFixed(roundPollutantBy);
+
+    // TODO: Revise this part
+    if(coordinates[i][pollutantName] == -1) {
+      //TODO: Change this include other things about the pollutant
+      circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + measurementName + " Level: Not Available");
+    }else{
+      circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + measurementName + " Level: " + roundedPollutant + measurement);
+    }
+    
+    markerDictionary[circleMarker] = coordinates[i]["Location"];
+    
+    circleMarker.addTo(mymap);
+  }
+  return markerDictionary;
+}
+
+
+
+
+
+// adds the onclick function to each of the markers, takes in the info of that particular marker
+
+
+
+
+
+
+
+//make the pollutant be passed in 
+async function makeMap(pollutant) { 
+
+  var coordinates = await updateMainData(pollutant);
+
+  var markerMap = plotMarkers(coordinates, pollutant);
 
   let fullData = coordinates;
  
   // get last date that was emitted
   const filteredCoordinates = coordinates.filter(obj => obj.datetime !== -1);
   maxDatetime = filteredCoordinates.reduce((max, obj) => obj.datetime > max ? obj.datetime : max, "");
+
+  //TODO: Finding out where this came form
 
 
   for (let i = 0; i < coordinates.length; i++) {
@@ -486,6 +540,8 @@ async function makeMap(pollutant) {
     circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + measurementName + " Level: " + roundedPollutant + measurement);
   }
   circleMarker.addTo(mymap);
+
+  let currentNode;
   
   //TODO: Change all these for the map as well
   circleMarker.on('click', function(event) {
@@ -520,56 +576,79 @@ async function makeMap(pollutant) {
       // display this since day is the default
       makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]), "day", selectedPollutant);
 
-      // I want to make sure, it's the timeselect of that marker and not another timeselect
-      timelineSelect.addEventListener('change', function() {
-          timeLine = timelineSelect.value;
-          if (timeLine == "day") {
-            makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]), "day", selectedPollutant);
-          } else if (timeLine == "week") {
+      currentNode = coordinates[i]["Node ID"];
+    
 
-            //activate loading
-            loader.style.display = 'block';
-            chart.style.display = 'none';
-            if (coordinates[i]["Node ID"] == -1) {
-              noChart.innerHTML = ''
-            }
-
-
-            getTimeSeriesData(coordinates[i]["Node ID"], "week",selectedPollutant).then(function(weekData) {
-              makeChart(weekData, "week", selectedPollutant);
-              loader.style.display = 'none';
-            });
-
-          } else if (timeLine == "month") {
-
-            // // activate loading
-            loader.style.display = 'block';
-            chart.style.display = 'none';
-
-            getTimeSeriesData(coordinates[i]["Node ID"], "month",selectedPollutant).then(function(monthData) {
-              makeChart(monthData, "month", selectedPollutant);
-              loader.style.display = 'none';
-            });
-
-          } else if (timeLine == "all") {
-
-            // activate loading
-            loader.style.display = 'block';
-            chart.style.display = 'none';
-
-            getTimeSeriesData(coordinates[i]["Node ID"], "all",selectedPollutant).then(function(allData) {
-              makeChart(allData, "all", selectedPollutant);
-              loader.style.display = 'none';
-            });
-
-          }
+    // function to handle a click
+    function timelineClick() {
+      timeLine = timelineSelect.value;
+      if (timeLine == "day") {
+        makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == currentNode), "day", selectedPollutant);
+      } else if (timeLine == "week") {
+  
+        //activate loading
+        loader.style.display = 'block';
+        chart.style.display = 'none';
+        if (currentNode == -1) {
+          noChart.innerHTML = ''
+        }
+  
+  
+        getTimeSeriesData(currentNode, "week",selectedPollutant).then(function(weekData) {
+          makeChart(weekData, "week", selectedPollutant);
+          loader.style.display = 'none';
         });
+  
+      } else if (timeLine == "month") {
+  
+        // // activate loading
+        loader.style.display = 'block';
+        chart.style.display = 'none';
+  
+        getTimeSeriesData(currentNode, "month",selectedPollutant).then(function(monthData) {
+          makeChart(monthData, "month", selectedPollutant);
+          loader.style.display = 'none';
+        });
+  
+      } else if (timeLine == "all") {
+  
+        // activate loading
+        loader.style.display = 'block';
+        chart.style.display = 'none';
+  
+        getTimeSeriesData(currentNode, "all",selectedPollutant).then(function(allData) {
+          makeChart(allData, "all", selectedPollutant);
+          loader.style.display = 'none';
+        });
+  
+      }
+
+    }
+    
+    // add event listener to the select
+    timelineSelect.addEventListener('change', timelineClick);
+
+    // remove when closed
+    closeButton.addEventListener('click', function(event) {
+      // Hide the sidebar
+      sidebar.style.display = 'none';
+      timelineSelect.removeEventListener('change', timelineClick);
+    
+    });
+
+
 
 
     }
+
+    
   });
     
-}}
+  }
+
+
+
+}
 
 // TODO: Change this to be the currently working code
 // would have to keep the pollutant as global variable?
@@ -611,9 +690,6 @@ scheduleDataUpdate();
 
 
 
-closeButton.addEventListener('click', function(event) {
-  // Hide the sidebar
-  sidebar.style.display = 'none';
-});
+
 
 

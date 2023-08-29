@@ -18,7 +18,7 @@ date = sys.argv[2]
 pollutant = sys.argv[3]
 
    
-
+### FOR TESTING PURPOSES
 # node = 264
 # date = "all"
 # pollutant = "co"
@@ -192,13 +192,7 @@ def generate_data(date,node,sensor_data):
 print(generate_data(date,node,sensor_data).to_json(orient='records'))
 
 
-# sensor_data = pd.read_csv("data/sensors_with_nodes.csv")
-# node_list = list(sensor_data["Node ID"])
-# for i in range(len(node_list)):
-#     for date in ["week","month","all"]:
-#         node = node_list[i]
-#         date = "all"
-#         print(generate_data(date,node,sensor_data))
+
 
 
 

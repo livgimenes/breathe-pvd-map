@@ -201,7 +201,7 @@ def convert_final():
     end_time = str(curr_time)[11:19] 
 
     if pollutant == "co2":
-      VARIABLE = "co2_corrected_avg_t_drift_applied,temp"
+      VARIABLE = "co2_corrected_avg_t_drift_applied"
     elif pollutant == "co":
       VARIABLE = "co_wrk_aux"
       
