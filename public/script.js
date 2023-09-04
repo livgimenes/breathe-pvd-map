@@ -1,5 +1,4 @@
 
-
 const apiKey = 'pk.eyJ1IjoiYWxmcmVkMjAxNiIsImEiOiJja2RoMHkyd2wwdnZjMnJ0MTJwbnVmeng5In0.E4QbAFjiWLY8k3AFhDtErA';
 
 const mymap = L.map('map').setView([41.831392, -71.417804], 12.5);
@@ -7,16 +6,23 @@ const mymap = L.map('map').setView([41.831392, -71.417804], 12.5);
 
 // Constants
 const date_obj = new Date();
+date_obj.setHours(date_obj.getHours() - 1);
+
+console.log(date_obj);
 const currentYear = date_obj.getFullYear().toString();
 const currentMonth = (date_obj.getMonth() + 1).toString().padStart(2, '0');
 const currentDate = date_obj.getDate().toString().padStart(2, '0');
 const currentHour = date_obj.getHours().toString().padStart(2, '0');
 
 
+
+
 var date = currentYear + '-' + currentMonth + '-' + currentDate;
 var time = currentHour + ':00:00';
-// subtract an hour from the time
-time  = (currentHour - 2) + ':00:00';
+time  = currentHour + ':00:00';
+if (currentHour.length === 1) {
+  currentHour = '0' + currentHour;
+}
 
 
 
@@ -313,6 +319,8 @@ async function getTimeSeriesData(node, timeLine, pollutant) {
 }
 
 
+
+
 function updatePollutant(div) {
  
   //buttons
@@ -355,7 +363,7 @@ function updatePollutant(div) {
    NetworkName.style.backgroundImage = "url('./icons/breathe_icon_green.png')";
    ChartTitle.innerHTML =  "Average CO Levels";
    loader.style.borderTop = '8px solid darkgreen';
-   concentrationDef.innerHTML = '<b> Concentration (V):<b>';
+   concentrationDef.innerHTML = '<b> Concentration (V):           <b>';
 
   }
   makeMap(selectedPollutant);
@@ -431,15 +439,36 @@ async function updateMainData(pollutant) {
 
 }
 
+// Fetching the general data info
+async function getInfoHelper(){
+  const response = await fetch('sensors_with_nodes.json');
+  const data = await response.json();
+  return data;
 
-// plots the coordinates on the map function 
+}
+
+function organizeDataByNodeId(jsonData) {
+  var dataByNodeId = {};
+
+  // Iterate through the original JSON data and organize it by Node ID
+  jsonData.forEach(function(sensor) {
+    var nodeId = sensor["Node ID"];
+    dataByNodeId[nodeId] = sensor;
+  });
+
+  return dataByNodeId;
+}
+
+
+
+//plot markers helper
 function plotMarkers(coordinates, pollutant) {
 
-  const markerDictionary = {};
-
-  let pollutantName, measurement,measurementName,roundPollutantBy;
+  var markerArray = [];
 
   //setting names
+  let pollutantName, measurement,measurementName,roundPollutantBy;
+
   if (pollutant == "co2") {
     pollutantName = "co2_corrected";
     measurement = " (ppm)";
@@ -453,106 +482,145 @@ function plotMarkers(coordinates, pollutant) {
     roundPollutantBy = 3;
   }
 
-  const filteredCoordinates = coordinates.filter(obj => obj.datetime !== -1);
-  maxDatetime = filteredCoordinates.reduce((max, obj) => obj.datetime > max ? obj.datetime : max, "");
+
+  console.log(coordinates);
+
+  console.log(CurrentDate);
+
+  // there should be around 22 nodes
 
 
-  for (let i = 0; i < coordinates.length; i++) {
-    const lat = coordinates[i]["Latitude"];
-    const lon = coordinates[i]["Longitude"];
-    let color = getColor(coordinates[i][pollutantName], pollutant);
+  // correct to make sure that we are only plotting unique markers with values
+  const filteredData = coordinates.filter(item => {
+    console.log(item.datetime);
+    console.log(CurrentDate)
+    return item.datetime === CurrentDate || item.datetime == -1;
+  });
+
+  console.log(filteredData);
 
 
-    let circleMarker = L.circleMarker([lat, lon], {
-      radius: 8,
-      color: 'black',
-      weight: 1,
-      fillColor: color,
-      fillOpacity: 0.8
-    });
-
-    let roundedPollutant = coordinates[i][pollutantName].toFixed(roundPollutantBy);
-
-    // TODO: Revise this part
-    if(coordinates[i][pollutantName] == -1) {
-      //TODO: Change this include other things about the pollutant
-      circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + measurementName + " Level: Not Available");
-    }else{
-      circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + measurementName + " Level: " + roundedPollutant + measurement);
-    }
-    
-    markerDictionary[circleMarker] = coordinates[i]["Location"];
-    
-    circleMarker.addTo(mymap);
-  }
-  return markerDictionary;
-}
+  for (let i = 0; i < filteredData.length; i++) {
+    const lat = filteredData[i]["Latitude"];
+    const lon = filteredData[i]["Longitude"];
+    let color = getColor(filteredData[i][pollutantName], pollutant);
 
 
-
-
-
-// adds the onclick function to each of the markers, takes in the info of that particular marker
-
-
-
-
-
-
-
-//make the pollutant be passed in 
-async function makeMap(pollutant) { 
-
-  var coordinates = await updateMainData(pollutant);
-
-  var markerMap = plotMarkers(coordinates, pollutant);
-
-  let fullData = coordinates;
- 
-  // get last date that was emitted
-  const filteredCoordinates = coordinates.filter(obj => obj.datetime !== -1);
-  maxDatetime = filteredCoordinates.reduce((max, obj) => obj.datetime > max ? obj.datetime : max, "");
-
-  //TODO: Finding out where this came form
-
-
-  for (let i = 0; i < coordinates.length; i++) {
-      const lat = coordinates[i]["Latitude"];
-      const lon = coordinates[i]["Longitude"];
-      let color = getColor(coordinates[i][pollutantName], pollutant);
- 
-
-    let circleMarker = L.circleMarker([lat, lon], {
-      radius: 8,
-      color: 'black',
+  let circleMarker = L.circleMarker([lat, lon], {
+    radius: 8,
+    color: 'black',
     weight: 1,
     fillColor: color,
     fillOpacity: 0.8
-  });
+    });
 
-  let roundedPollutant = coordinates[i][pollutantName].toFixed(roundPollutantBy);
-  
+  // you have to make sure that these are unique
+  console.log(circleMarker);
+
+  // if the marker is not  already in the array, add it
+  if (!markerArray.includes(circleMarker)){
+    markerArray.push({ marker: circleMarker, nodeId:filteredData[i]["Node ID"] });
+  }
+
+  let roundedPollutant = filteredData[i][pollutantName].toFixed(roundPollutantBy);
+
+
   // TODO: Revise this part
-  if(coordinates[i][pollutantName] == -1) {
+  if(filteredData[i][pollutantName] == -1) {
     //TODO: Change this include other things about the pollutant
-    circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + measurementName + " Level: Not Available");
+    circleMarker.bindPopup("Location: " + filteredData[i]["Location"] + "<br>" + measurementName + " Level: Not Available");
   }else{
-    circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + measurementName + " Level: " + roundedPollutant + measurement);
+    circleMarker.bindPopup("Location: " + filteredData[i]["Location"] + "<br>" + measurementName + " Level: " + roundedPollutant + measurement);
   }
   circleMarker.addTo(mymap);
 
-  let currentNode;
-  
-  //TODO: Change all these for the map as well
-  circleMarker.on('click', function(event) {
+}
+console.log(markerArray);
+return markerArray;
+
+
+}
+
+async function DisplayTimeseries(event, nodeId,coordinates, pollutant) {
+    timeLine = timelineSelect.value;
+    if (timeLine == "day") {
+      makeChart(coordinates.filter(dataPoint => dataPoint["Node ID"] == nodeId), "day", pollutant);
+    } else if (timeLine == "week") {
+
+      //activate loading
+      loader.style.display = 'block';
+      chart.style.display = 'none';
+
+      //TODO: Rething this part
+      if (nodeId == -1) {
+        noChart.innerHTML = ''
+      }
+
+      getTimeSeriesData(nodeId, "week",pollutant).then(function(weekData) {
+        makeChart(weekData, "week", pollutant);
+        loader.style.display = 'none';
+      });
+
+    } else if (timeLine == "month") {
+
+      // // activate loading
+      loader.style.display = 'block';
+      chart.style.display = 'none';
+
+      getTimeSeriesData(nodeId, "month",pollutant).then(function(monthData) {
+        makeChart(monthData, "month", pollutant);
+        loader.style.display = 'none';
+      });
+
+    } else if (timeLine == "all") {
+
+      // activate loading
+      loader.style.display = 'block';
+      chart.style.display = 'none';
+
+      getTimeSeriesData(nodeId, "all",pollutant).then(function(allData) {
+        makeChart(allData, "all", pollutant);
+        loader.style.display = 'none';
+      });
+
+    }
+
+  }
+ 
+
+
+
+
+async function DisplaySidebar(event, nodeId,coordinates, pollutant) {
+
+  // extracting general information about the node
+  const generalNodeInfo = await getInfoHelper();
+  const generalByNodeId = organizeDataByNodeId(generalNodeInfo);
+
+  console.log(nodeId);
+  // getting information for a specific pollutant
+  let pollutantNameHTML,pollutantNameJSON;
+  if (pollutant == 'co2') {
+    pollutantNameHTML = '<p>CO<sub>2</sub> Daily</p>';
+    pollutantNameJSON = 'co2_corrected';
+  } else if (pollutant == 'co') {
+    pollutantNameHTML = '<p>CO Daily</p>';
+    pollutantNameJSON = 'co_wrk_aux';
+  }
+
+  // event listener reference
+  const timelineSelectHandler = (event) => DisplayTimeseries(event, nodeId, coordinates, pollutant);
+
+
+
     if (sidebar) {
       // make it visable 
       sidebar.style.display = 'block';
 
       // add the names
-      MonitorName.innerHTML = '<p>' + coordinates[i]["Location"] + '</p>';
+      MonitorName.innerHTML = '<p>' + generalByNodeId[nodeId]["Location"] + '</p>';
 
-      const installationDate = coordinates[i]["Installation Date"]; 
+      const installationDate = generalByNodeId[nodeId]["Installation Date"]; 
       const startDate = new Date(installationDate);
       const endDate = new Date();
 
@@ -561,11 +629,7 @@ async function makeMap(pollutant) {
       MonitorTimeStart.innerHTML = `<p>Installed from: ${startDate.toLocaleDateString('en-US', options)}</p>`;
       MonitorTimeEnd.innerHTML = `<p>To: ${endDate.toLocaleDateString('en-US', options)}</p>`;
 
-      //creating circle image with html
-      pollMarker.innerHTML = "<span class='dot' style='background-color: " + color + ";'></span>";
-
-      // seeting the text to daily for default
-      pollName.innerHTML = '<p>CO<sub>2</sub> Daily</p>';
+      pollName.innerHTML = pollutantNameHTML;
 
       //make Timeselect default to day 
       timelineSelect.value = "day";
@@ -574,86 +638,53 @@ async function makeMap(pollutant) {
 
 
       // display this since day is the default
-      makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]), "day", selectedPollutant);
-
-      currentNode = coordinates[i]["Node ID"];
+      makeChart(coordinates.filter(dataPoint => dataPoint["Node ID"] == generalByNodeId[nodeId]["Node ID"]), "day", selectedPollutant);
     
 
-    // function to handle a click
-    function timelineClick() {
-      timeLine = timelineSelect.value;
-      if (timeLine == "day") {
-        makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == currentNode), "day", selectedPollutant);
-      } else if (timeLine == "week") {
-  
-        //activate loading
-        loader.style.display = 'block';
-        chart.style.display = 'none';
-        if (currentNode == -1) {
-          noChart.innerHTML = ''
-        }
-  
-  
-        getTimeSeriesData(currentNode, "week",selectedPollutant).then(function(weekData) {
-          makeChart(weekData, "week", selectedPollutant);
-          loader.style.display = 'none';
-        });
-  
-      } else if (timeLine == "month") {
-  
-        // // activate loading
-        loader.style.display = 'block';
-        chart.style.display = 'none';
-  
-        getTimeSeriesData(currentNode, "month",selectedPollutant).then(function(monthData) {
-          makeChart(monthData, "month", selectedPollutant);
-          loader.style.display = 'none';
-        });
-  
-      } else if (timeLine == "all") {
-  
-        // activate loading
-        loader.style.display = 'block';
-        chart.style.display = 'none';
-  
-        getTimeSeriesData(currentNode, "all",selectedPollutant).then(function(allData) {
-          makeChart(allData, "all", selectedPollutant);
-          loader.style.display = 'none';
-        });
-  
-      }
+      // add the event listener for the timeseries
+      timelineSelect.addEventListener('change',timelineSelectHandler);
 
     }
-    
-    // add event listener to the select
-    timelineSelect.addEventListener('change', timelineClick);
-
-    // remove when closed
+  
     closeButton.addEventListener('click', function(event) {
       // Hide the sidebar
       sidebar.style.display = 'none';
-      timelineSelect.removeEventListener('change', timelineClick);
-    
+      // remove the event listener
+      timelineSelect.removeEventListener('change', timelineSelectHandler);
     });
-
-
-
-
-    }
-
     
-  });
     
-  }
-
-
 
 }
 
+
+//make the pollutant be passed in 
+async function makeMap(pollutant) { 
+
+
+  var coordinates = await updateMainData(pollutant);
+
+  var markerArray = plotMarkers(coordinates, pollutant);
+
+ 
+  // get last date that was emitted
+  const filteredCoordinates = coordinates.filter(obj => obj.datetime !== -1);
+  maxDatetime = filteredCoordinates.reduce((max, obj) => obj.datetime > max ? obj.datetime : max, "");
+
+
+  for (const item of markerArray) {
+    const circleMarker = item.marker;
+    const nodeId = item.nodeId;
+    circleMarker.on('click', (event) => DisplaySidebar(event,nodeId, coordinates, pollutant));
+  }
+  
+  
+}
 // TODO: Change this to be the currently working code
 // would have to keep the pollutant as global variable?
 console.log("Pollutant:", selectedPollutant);
 makeMap(selectedPollutant);
+
 
 
 // Function to calculate the time until the next straight hour
