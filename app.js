@@ -1,5 +1,5 @@
 const express = require('express');
-const { spawn } = require('child_process');
+const { spawn } = require('child_process'); 
 const app = express();
 
 app.use(express.static(__dirname + '/public'));
@@ -9,56 +9,86 @@ app.get('/', (req, res) => {
 });
 
 
-function runPythonScript() {
-  const pythonScript = spawn('python3', ['data/getcoord.py']);
+//Retrieving the data for all of the nodes, depending on the pollutant type
+app.get('/main_data', async (req, res) => {
+  try {
+    const { pollutant_type} = req.query;
+    const data = await getMainData(pollutant_type);
+    res.send(data);
+    console.log("Data Sent at " + new Date().toLocaleString());
+  } catch (error) {
+    res.status(500).json({ error: 'An error occurred while fetching data' });
+  }
+});
 
-  pythonScript.stdout.on('data', (data) => {
-    console.log('Refreshing process started')
-    console.log(`stdout: ${data}`);
-  });
 
-  pythonScript.stderr.on('data', (data) => {
-    console.error(`stderr: ${data}`);
-  });
+// Helper function for the main_data
+async function getMainData(pollutant_type) {
+  return new Promise((resolve, reject) => {
+    const updateScript = spawn('python3', ['data/update_pollutants.py', pollutant_type]);
 
-  pythonScript.on('close', (code) => {
-    console.log(`Json is updated. child process exited with code ${code}`);
+    let stdout = ''; 
+
+    updateScript.stdout.on('data', (data) => {
+      console.log(`Data Collected!`);
+      stdout += data.toString(); 
+    });
+
+    updateScript.stderr.on('data', (data) => {
+      console.error(`stderr: ${data}`);
+    });
+
+    updateScript.on('close', (code) => {
+      console.log(`Json is updated. Child process exited with code ${code}`);
+
+      try {
+        const parsedData = JSON.parse(stdout);
+        resolve(parsedData); 
+      } catch (error) {
+        reject(error); 
+      }
+    });
   });
 }
 
 
-setInterval(runPythonScript, 60 * 60 * 1000);
-
-// fetching and returning the data from the timeseries
-app.get('/api/data', (req, res) => {
+//Retrieves data for a specific node given the timerange and pollutant type, used for the timeseries graph
+app.get('/timeseries', (req, res) => {
   console.log(req.query);
-  const { nodeId, date } = req.query;
-  const pythonScript2 = spawn('python3', ['data/timeseries.py', nodeId, date]);
+  const { nodeId, date, pollutant } = req.query;
+  console.log(nodeId, date, pollutant)
+  const timeseriesScript = spawn('python3', ['data/get_timeseries.py', nodeId, date, pollutant]);
 
   let stdout = '';
-  pythonScript2.stdout.on('data', data => {
+  let stderr = '';
+
+  timeseriesScript.stdout.on('data', data => {
     stdout += data.toString();
   });
 
-
-  pythonScript2.stderr.on('data', err => {
-    res.status(500).send(err.toString());
+  timeseriesScript.stderr.on('data', err => {
+    stderr += err.toString(); // Collect the error message
   });
 
-  pythonScript2.on('close', code => {
+  timeseriesScript.on('close', code => {
+    console.log(code);
 
     if (code === 0) {
       res.send(stdout);
-      console.log(stdout);
     } else {
-      res.status(500).send(`Python script exited with code ${code}`);
+      if (stderr) {
+        res.status(500).send(stderr); // Send the error response
+      } else {
+        res.status(500).send(`Python script exited with code ${code}`);
+      }
     }
   });
 });
 
 
-
+// Spins up the server
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`Server started on port ${port}`);
+  console.log("Loading Data in...");
 });

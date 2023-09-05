@@ -2,22 +2,27 @@
 
 const apiKey = 'pk.eyJ1IjoiYWxmcmVkMjAxNiIsImEiOiJja2RoMHkyd2wwdnZjMnJ0MTJwbnVmeng5In0.E4QbAFjiWLY8k3AFhDtErA';
 
-const mymap = L.map('map').setView([41.831391, -71.415804], 13);
+const mymap = L.map('map').setView([41.831392, -71.417804], 12.5);
 
 
 // Constants
-
 const date_obj = new Date();
+date_obj.setHours(date_obj.getHours() - 1);
+
 const currentYear = date_obj.getFullYear().toString();
 const currentMonth = (date_obj.getMonth() + 1).toString().padStart(2, '0');
 const currentDate = date_obj.getDate().toString().padStart(2, '0');
 const currentHour = date_obj.getHours().toString().padStart(2, '0');
 
 
+
+
 var date = currentYear + '-' + currentMonth + '-' + currentDate;
 var time = currentHour + ':00:00';
-// subtract an hour from the time
-time  = (currentHour - 2) + ':00:00';
+time  = currentHour + ':00:00';
+if (currentHour.length === 1) {
+  currentHour = '0' + currentHour;
+}
 
 
 
@@ -25,7 +30,7 @@ time  = (currentHour - 2) + ':00:00';
 var CurrentDate = date + ' ' + time;
 
 
-// side bar infos
+// Buttons 
 var sidebar = document.getElementById('sidebar');
 var closeButton = document.getElementById('close-button');
 var MonitorName = document.getElementById("monitorName");
@@ -34,10 +39,12 @@ var MonitorTimeEnd = document.getElementById("monitorTime2");
 var pollValue = document.getElementById("pollValue");
 var pollMarker = document.getElementById("pollMarker");
 var pollName = document.getElementById("pollName");
-var timelineSelect = document.getElementById('Timeline');
+var timelineSelect = document.getElementById('timeline-select');
 var loader = document.getElementById('loader');
 var noChart = document.getElementById('noChart');
 var chart = document.getElementById('chart');
+var NetworkName = document.getElementById('NetworkName');
+var ChartTitle = document.getElementById("LevelTitle");
 
 
 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
@@ -48,60 +55,41 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
     accessToken: apiKey
 }).addTo(mymap);
 
-// Adding the legend 
-
-class LegendControl extends L.Control {
-  // Define the onAdd method
-  onAdd() {
-      const div = L.DomUtil.create('div', 'legend');
-      div.style.backgroundColor = "white";
-      div.style.padding = "6px";
-      div.style.borderRadius = "6px";
-      div.style.width = "max-content";
-      div.style.position = "absolute";
-      div.style.right = "650px";
-      div.style.top = "520px";
-      div.style.fontSize = "14px";
-      div.innerHTML =  `
-      <div>
-          <b>CO<sub>2</sub> Levels</b>
-          <br>
-          Date: ${date}
-          <br>
-          Time:  ${time}
-          <br>
-          <b>Legend</b>
-          <br>
-          <div style="height: 20px;">600 ppm </div>
-          <div style="display:inline-block; width: 20px; height: 120px; background: linear-gradient(to bottom, rgb(0, 31, 102), rgb(39, 74, 146), rgb(77, 117, 190), rgb(115, 160, 234), rgb(153, 187, 244), rgb(191, 213, 253), rgb(214, 226, 255), rgb(229, 237, 255));;"></div>
-          <br>
-          <div style="height: 20px;">400 ppm </div>
-          </div>
-      </div>`;
-      return div;
-  }
-}
-
-const legendControl = new LegendControl();
-
-// Add the custom control to the map
-mymap.addControl(legendControl);
-
 
 //// Non-Data Handling Helpers
+function normalize(value, min, max) {
+  return (value - min) / (max - min);
+}
+
+function roundToDecimal(number, decimalPlaces) {
+  const factor = 10 ** decimalPlaces;
+  return parseFloat((Math.round(number * factor) / factor).toFixed(decimalPlaces));
+}
+
+//change this to be a value and a type of pollutant
+function getColor(value, pollutant) {
 
 
-function getColor(co2Value) {
-
-  // Define the two RGB colors to interpolate between
-  const color1 = [0, 31, 102];  // dark blue
-  const color2 = [229, 237, 255];  // light blue
-
-  if(co2Value == -1) {
-    return `#DCDCDC`};
+  // add an if statement that changes the color and scale values based on the color
+  let color1, color2, percent;
 
 
-  const percent = 1 - (co2Value - 400) / 200;
+  if(pollutant == 'co2') {
+    color1 = [0, 31, 102];  // dark blue
+    color2 = [229, 237, 255];  // light blue
+    percent = 1 - (value - 350) / 200;
+
+    
+  } else if (pollutant == 'co') {
+    color1 = [234, 255, 236];
+    color2 =  [0,100,0];
+    percent = normalize(value, 0, 0.4); // Normalizing to [0, 1]
+  }
+  
+
+
+  if(value == -1) {
+    return `#F5F5F5`};
 
 
   const color = [
@@ -115,10 +103,10 @@ function getColor(co2Value) {
 }
 
 // condenses the data by calculating the average
-function processData(datetime, co2_corrected, chunkSize) {
+function processData(datetime, correctPollutant, chunkSize) {
 
   const dates = datetime.map(date => new Date(date));
-  const data = dates.map((date, i) => ({ date, co2: co2_corrected[i] }));
+  const data = dates.map((date, i) => ({ date, pollutant: correctPollutant[i] }));
 
   data.sort((a, b) => a.date - b.date);
 
@@ -126,34 +114,63 @@ function processData(datetime, co2_corrected, chunkSize) {
  
 
   const processedData = chunkedData.map(chunk => {
-    const avgCO2 = _.meanBy(chunk, 'co2');
+    const avgPollutant = _.meanBy(chunk, 'pollutant');
     const avgDate = chunk[Math.floor(chunk.length / 2)].date;
     const pcDate = avgDate.toISOString().slice(0, 19).replace('T', ' ');
-    return { date: pcDate, co2: avgCO2 };
+    return { date: pcDate, pollutant: avgPollutant};
   });
+
   
   let processedDatetime = processedData.map(d => d.date);
-  const processedCO2 = processedData.map(d => d.co2);
-  return { processedDatetime, processedCO2 };
+  const processedPollutant = processedData.map(d => d.pollutant);
+
+  return { processedDatetime, processedPollutant };
 }
 
 
-// Async Helpers
+async function makeChart(data,timeRange,pollutant) {
 
-async function makeChart(data,timeRange) {
-
-
-
-  const filteredData = await data.filter(d => d.co2_corrected !== -1);
-  const datetime = await filteredData.map(d => d.datetime);
-  const co2_corrected = await filteredData.map(d => d.co2_corrected);
+  //variable for functions
+  let filteredData, datetime, pollutant_corrected,roundPollutantBy;
+  
+  // variablesfor styling and chart
+  let textTitle, textTitleMeasure, chartColor,adjustRange,measurement;
 
 
+  // setting variables based on pollutant
+  if (pollutant == 'co2') {
+    filteredData = await data.filter(d => d.co2_corrected !== -1);
+    datetime = await filteredData.map(d => d.datetime);
+    pollutant_corrected = await filteredData.map(d => d.co2_corrected);
+    measurement = ' (ppm) </p>';
+    roundPollutantBy = 0;
 
-  // Need to retructure this
-  if (co2_corrected.length === 0) {
+    textTitle = 'CO<sub>2</sub>';
+    textTitleMeasure = 'CO<sub>2</sub> (ppm)';
+    chartColor = 'DarkBlue';
+    adjustRange = 10;
+
+
+  }else if (pollutant == 'co') {
+    filteredData = await data.filter(d => d.co_wrk_aux !== -1);
+    datetime = await filteredData.map(d => d.datetime);
+    pollutant_corrected = await filteredData.map(d => d.co_wrk_aux);
+
+    measurement = ' (V) </p>';
+    roundPollutantBy = 3;
+    textTitle = 'CO';
+    textTitleMeasure = 'CO (V)';
+    chartColor = 'DarkGreen';
+    adjustRange = 0.01;
+    
+
+  }
+
+
+  // Accounting for null data + styling
+  if (pollutant_corrected.length === 0) {
     pollValue.innerHTML = '<p>Not Available</p>';
-    let color = getColor(0);
+    let color = getColor(0,pollutant);
     pollMarker.innerHTML = "<span class='dot' style='background-color: " + color + ";'></span>";
     //make chart display nothing
     chart.style.display = 'none';
@@ -162,82 +179,82 @@ async function makeChart(data,timeRange) {
   } else{
     chart.style.display = 'block';
     noChart.innerHTML = '';
-    let sum = co2_corrected.reduce((a, b) => a + b, 0);
-    let avg = sum / co2_corrected.length;
-    avg = Math.round(avg * 10) / 10;
+    let sum = pollutant_corrected.reduce((a, b) => a + b, 0);
+    let avg = sum / pollutant_corrected.length;
+    avg = (avg * 10) / 10;
+    avg = avg.toFixed(roundPollutantBy);
     let stringAvg = avg.toString();
-    pollValue.innerHTML = '<p>' + stringAvg + ' (ppm) </p>';
+    pollValue.innerHTML = '<p>' + stringAvg + measurement;
 
     // generate color based the average for that node
-    let color = getColor(avg);
+    let color = getColor(avg,pollutant);
 
     pollMarker.innerHTML = "<span class='dot' style='background-color: " + color + ";'></span>";
   }
 
   let processedDatetime = datetime;
-  let processedCo2 = co2_corrected;
+  let processedPollutant = pollutant_corrected;
   let xaxisTik = ''
 
 
-  if(timeRange == 'day') {
-    pollName.innerHTML = '<p>CO<sub>2</sub> Daily</p>';
-  } else if (timeRange == 'week'){
-    pollName.innerHTML = '<p>CO<sub>2</sub> Weekly</p>';
-  }
-  else if (timeRange == 'month') {
-    pollName.innerHTML = '<p>CO<sub>2</sub> Monthly</p>';
-
-  } else if (timeRange == 'all') {
-    pollName.innerHTML = '<p>CO<sub>2</sub> All</p>';
-  }
-
-  // display the data based on type
-
-  //TODO: this is not working
+  
   if (timeRange == 'day') {
-    xaxisTik = '%H:%M';
+    pollName.innerHTML = `<p>${textTitle} Daily</p>`;
+  } else if (timeRange == 'week') {
+    pollName.innerHTML = `<p>${textTitle} Weekly</p>`;
+  } else if (timeRange == 'month') {
+    pollName.innerHTML = `<p>${textTitle} Monthly</p>`;
+  } else if (timeRange == 'all') {
+    pollName.innerHTML = `<p>${textTitle} All</p>`;
+  }
+
+
+  //Styling the chart display
+  if (timeRange == 'day') {
+    xaxisTik = '%m/%d %H:%M';
   } else if (timeRange == 'week' || timeRange == 'month') { 
     xaxisTik = '%m-%d';
   } else if (timeRange == 'all') { 
     xaxisTik = '%Y-%m-%d';
   }
 
-
-  // scaling fer amounts of data
-    if (co2_corrected.length > 120) {
+// condensing datapoints
+if (pollutant_corrected.length > 120) {
       let chunkSize = 8;
-      if (co2_corrected.length> 400){
+      if (pollutant_corrected.length> 400){
         chunkSize = 40;
       }
       
-      if (co2_corrected.length > 1000) {
+      if (pollutant_corrected.length > 1000) {
         chunkSize = 200;
       }
 
-      const { processedDatetime: pd, processedCO2: pc } = processData(datetime, co2_corrected, chunkSize);
+      const { processedDatetime: pd, processedPollutant: pc } = processData(datetime,pollutant_corrected, chunkSize);
       processedDatetime = pd;
-      processedCo2 = pc;
+      processedPollutant = pc;
     
     }
 
-  // Create a trace for the CO2 values
-  const co2Trace = {
+
+
+  // Create a trace for the Pollutant values
+  const pollutantTrace = {
     x: processedDatetime,
-    y: processedCo2,
+    y: processedPollutant,
     type: 'scatter',
     mode: 'lines+markers',
-    name: 'CO<sub>2</sub>',
+    name: textTitleMeasure,
     yaxis: 'y',
     line: {
-      color: 'darkblue',
+      color: chartColor,
       width: 3
     },
     hoverinfo: 'none'
   };
 
-  // make the bound be the largest value of y + 10 and the largest value of y - 10
-  yLowBound = Math.min(...processedCo2) - 10;
-  yHighBound = Math.max(...processedCo2) + 10;
+  // creating bounds and ranges for the axis 
+  yLowBound = Math.min(...processedPollutant) - adjustRange;
+  yHighBound = Math.max(...processedPollutant) + adjustRange;
 
 
   // Define the layout with two y-axes
@@ -249,15 +266,22 @@ async function makeChart(data,timeRange) {
       zeroline: true,
       fixedrange: true,
       title: {
-        text: 'CO<sub>2</sub> (ppm)',
+        text: textTitleMeasure,
         font: {
           size: 10},
+      },
+      tickfont:{
+        size: 10,
+
       }
     },
     height: 350,
     xaxis: {
       showline: true,
-      tickformat: '%d %H:%M',
+      tickformat: xaxisTik,
+      tickfont: {
+        size: 9,      
+      }
     },
     
     margin: {
@@ -269,101 +293,474 @@ async function makeChart(data,timeRange) {
   };
 
   // Combine the traces and layout and plot the chart
-  const datas = [co2Trace];
+  const datas = [pollutantTrace];
   Plotly.newPlot('chart', datas, layout, {staticPlot: true});
 
 }
 
 
-async function getData(node, timeLine) {
-    const response = await axios.get('/api/data', {
+//Defining the standard pollutant
+let selectedPollutant = 'co2';
+
+
+async function getTimeSeriesData(node, timeLine, pollutant) {
+    const response = await axios.get('/timeseries', {
       params: {
         nodeId: node,
-        date: timeLine
+        date: timeLine,
+        pollutant: pollutant
       }
     });
     return response.data;
 }
 
 
-fetch("coords.json")
-  .then(response => response.json())
-  .then(coordinates => {
-    let fullData = coordinates;
- 
-    // get last date that was emitted
-    const filteredCoordinates = coordinates.filter(obj => obj.datetime !== -1);
-    maxDatetime = filteredCoordinates.reduce((max, obj) => obj.datetime > max ? obj.datetime : max, "");
-  
-
-    for (let i = 0; i < coordinates.length; i++) {
-        const lat = coordinates[i]["Latitude"];
-        const lon = coordinates[i]["Longitude"];
-        let color = getColor(coordinates[i]["co2_corrected"]);
-     
-
-      let circleMarker = L.circleMarker([lat, lon], {
-        radius: 8,
-        color: 'black',
-        weight: 1,
-        fillColor: color,
-        fillOpacity: 0.8
-      });
-
-      if(coordinates[i]["co2_corrected"] == -1) {
-        circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO<sub>2</sub> Level: Not Available");
-      }else{
-        circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + "CO<sub>2</sub> Level: " + coordinates[i]["co2_corrected"] + " (ppm) ");
-      }
-      circleMarker.addTo(mymap);
-      
-
-      circleMarker.on('click', function(event) {
-        if (sidebar) {
-          // make it visable 
-          sidebar.style.display = 'block';
-
-          // add the names
-          MonitorName.innerHTML = '<p>' + coordinates[i]["Location"] + '</p>';
-
-          const installationDate = coordinates[i]["Installation Date"]; 
-          const startDate = new Date(installationDate);
-          const endDate = new Date();
-
-          const options = { year: 'numeric', month: 'long', day: 'numeric' };
-
-          MonitorTimeStart.innerHTML = `<p>Installed from: ${startDate.toLocaleDateString('en-US', options)}</p>`;
-          MonitorTimeEnd.innerHTML = `<p>To: ${endDate.toLocaleDateString('en-US', options)}</p>`;
-
-          //creating circle image with html
-          pollMarker.innerHTML = "<span class='dot' style='background-color: " + color + ";'></span>";
-
-          // seeting the text to daily for default
-          pollName.innerHTML = '<p>CO<sub>2</sub> Daily</p>';
-
-          //make Timeselect default to day 
-          timelineSelect.value = "day";
-
-          loader.style.display = 'none';
-
-
-          // display this since day is the default
-          makeChart(fullData.filter(dataPoint => dataPoint["Node ID"] == coordinates[i]["Node ID"]));
-          
-
-        }
-      });
-        
+async function updateMainData(pollutant) {
+  //maybe add a trigger for new data here
+  const response = await axios.get('/main_data', {
+    params: {
+      pollutant_type: pollutant
     }
+  });
+  return response.data;
+
+}
+
+
+// Global variables for pollutants
+let co2Array = [];
+let coArray = [];
+let complimentaryPollutant = "";
+
+
+
+function updatePollutant(div) {
+ 
+  //buttons
+  const gradientDiv = div.querySelector('#gradient-div');
+  const radioCO = div.querySelector('#co-option');
+  const radioCO2 = div.querySelector('#co2-option');
+  const maxValue = div.querySelector('#max-value');
+  const minValue = div.querySelector('#min-value');
+  const concentrationDef = div.querySelector('#concentration-tag');
+
+  
+  if (radioCO2.checked) {
+    console.log('co2 checked');
+
+    // changing the legend 
+    gradientDiv.style.background = "linear-gradient(to bottom, rgb(0, 31, 102), rgb(39, 74, 146), rgb(77, 117, 190), rgb(115, 160, 234), rgb(153, 187, 244), rgb(191, 213, 253), rgb(214, 226, 255), rgb(229, 237, 255))";
+    maxValue.innerHTML = '600 ppm';
+    minValue.innerHTML = '350 ppm';
+    selectedPollutant = 'co2';
+
+    //changing the chart
+    closeButton.style.backgroundImage = "url('./icons/cross_png_clean.png')";
+    NetworkName.style.backgroundImage = "url('./icons/breathe_icon.png')";
+    ChartTitle.innerHTML =  "Average CO<sub>2</sub> Levels";
+    loader.style.borderTop = '8px solid darkblue';
+    concentrationDef.innerHTML = '<b> Concentration (ppm):<b>';
+
+    makeMap(co2Array, selectedPollutant);
     
+
+  } else if (radioCO.checked) {
+    console.log('co checked');
+
+    //changing the legend 
+    gradientDiv.style.background = "linear-gradient(to bottom,rgb(0,100,0), rgb(116, 150, 113), rgb(143, 188, 139), rgb(209, 242, 206), rgb(236, 252, 235))";
+    maxValue.innerHTML = '0.4 V';
+    minValue.innerHTML = '0 V';
+    selectedPollutant = 'co';
+
+   //changing the chart
+   closeButton.style.backgroundImage = "url('./icons/cross_green_clean.png')";  
+   NetworkName.style.backgroundImage = "url('./icons/breathe_icon_green.png')";
+   ChartTitle.innerHTML =  "Average CO Levels";
+   loader.style.borderTop = '8px solid darkgreen';
+   concentrationDef.innerHTML = '<b> Concentration (V):<b>';
+
+   makeMap(coArray, selectedPollutant);
+
+  }
+  console.log("Updates requested for: ", selectedPollutant);
+}
+
+
+
+class LegendControl extends L.Control {
+  // Define the onAdd method
+  onAdd() {
+      const div = L.DomUtil.create('div', 'legend');
+      div.style.backgroundColor = "white";
+      div.style.padding = "6px";
+      div.style.borderRadius = "6px";
+      div.style.width = "max-content";
+      div.style.position = "absolute";
+      div.style.right = "610px";
+      div.style.top = "450px";
+      div.style.fontSize = "14px";
+      div.innerHTML =  `
+      <div>
+        <b>Legend</b>
+        <br>
+        Date: ${date}
+        <br>
+        Time: ${time}
+        <br>
+        <b>Pollutants:</b>
+        <ul style="list-style: none; margin: 0; padding: 0"">
+          <li>
+            <input type="radio" id="co-option" name="selector" onchange="updatePollutant(this.parentElement.parentElement.parentElement)">
+            <label for="f-option">CO</label>
+          </li>
+          <li>
+            <input type="radio" id="co2-option" name="selector" checked="checked" onchange="updatePollutant(this.parentElement.parentElement.parentElement)">
+            <label for="s-option">CO<sub>2</sub></label>
+          </li>
+        </ul>
+          <div id="concentration-tag"><b>Concentration (ppm):</b> </div>
+          <br>
+          <div style="display: inline-block; vertical-align: top; margin-top: -20px;">
+          <div id="max-value" style="height: 20px;">600 ppm </div>
+          <div id="gradient-div" style="display:inline-block; width: 20px; height: 120px; background: linear-gradient(to bottom, rgb(0, 31, 102), rgb(39, 74, 146), rgb(77, 117, 190), rgb(115, 160, 234), rgb(153, 187, 244), rgb(191, 213, 253), rgb(214, 226, 255), rgb(229, 237, 255));;"></div>
+          <br>
+          <div id="min-value" style="height: 20px;">350 ppm </div>
+          </div>
+          </div>
+      </div>`;
+
+    
+
+
+      return div;
+  }
+}
+
+const legendControl = new LegendControl();
+
+// Add the custom control to the map
+mymap.addControl(legendControl);
+
+
+
+
+// Fetching the general data info
+async function getInfoHelper(){
+  const response = await fetch('sensors_with_nodes.json');
+  const data = await response.json();
+  return data;
+
+}
+
+function organizeDataByNodeId(jsonData) {
+  var dataByNodeId = {};
+
+  // Iterate through the original JSON data and organize it by Node ID
+  jsonData.forEach(function(sensor) {
+    var nodeId = sensor["Node ID"];
+    dataByNodeId[nodeId] = sensor;
+  });
+
+  return dataByNodeId;
+}
+
+//GLOBAL VARIABLES
+var markerArray = [];
+
+
+//plot markers helper
+function plotMarkers(coordinates, pollutant) {
+
+  // marker array not empty then loop throuh and remove all of the markers
+  if (markerArray.length > 0) {
+    for (let i = 0; i < markerArray.length; i++) {
+      mymap.removeLayer(markerArray[i].marker);
+    }
+  }
+
+  //setting names
+  let pollutantName, measurement,measurementName,roundPollutantBy;
+
+  if (pollutant == "co2") {
+    pollutantName = "co2_corrected";
+    measurement = " (ppm)";
+    measurementName = "CO<sub>2</sub>";
+    roundPollutantBy = 0;
+
+  } else if (pollutant == "co") {
+    pollutantName = "co_wrk_aux";
+    measurement = " (V)";
+    measurementName = "CO";
+    roundPollutantBy = 3;
+  }
+
+
+
+  // correct to make sure that we are only plotting unique markers with values
+  const filteredData = coordinates.filter(item => {
+    return item.datetime === CurrentDate || item.datetime == -1;
   });
 
 
+  for (let i = 0; i < filteredData.length; i++) {
+    const lat = filteredData[i]["Latitude"];
+    const lon = filteredData[i]["Longitude"];
+    let color = getColor(filteredData[i][pollutantName], pollutant);
 
 
-closeButton.addEventListener('click', function(event) {
-  // Hide the sidebar
-  sidebar.style.display = 'none';
+  let circleMarker = L.circleMarker([lat, lon], {
+    radius: 8,
+    color: 'black',
+    weight: 1,
+    fillColor: color,
+    fillOpacity: 0.8
+    });
+
+  
+
+  // if the marker is not  already in the array, add it
+  if (!markerArray.includes(circleMarker)){
+    markerArray.push({ marker: circleMarker, nodeId:filteredData[i]["Node ID"] });
+  }
+
+  let roundedPollutant = filteredData[i][pollutantName].toFixed(roundPollutantBy);
+
+
+  // TODO: Revise this part
+  if(filteredData[i][pollutantName] == -1) {
+    //TODO: Change this include other things about the pollutant
+    circleMarker.bindPopup("Location: " + filteredData[i]["Location"] + "<br>" + measurementName + " Level: Not Available");
+  }else{
+    circleMarker.bindPopup("Location: " + filteredData[i]["Location"] + "<br>" + measurementName + " Level: " + roundedPollutant + measurement);
+  }
+  circleMarker.addTo(mymap);
+
+}
+console.log(markerArray);
+return markerArray;
+
+
+}
+
+async function DisplayTimeseries(event, nodeId,coordinates, pollutant) {
+    timeLine = timelineSelect.value;
+    if (timeLine == "day") {
+      makeChart(coordinates.filter(dataPoint => dataPoint["Node ID"] == nodeId), "day", pollutant);
+    } else if (timeLine == "week") {
+
+      //activate loading
+      loader.style.display = 'block';
+      chart.style.display = 'none';
+
+      //TODO: Rething this part
+      if (nodeId == -1) {
+        noChart.innerHTML = ''
+      }
+
+      getTimeSeriesData(nodeId, "week",pollutant).then(function(weekData) {
+        makeChart(weekData, "week", pollutant);
+        loader.style.display = 'none';
+      });
+
+    } else if (timeLine == "month") {
+
+      // // activate loading
+      loader.style.display = 'block';
+      chart.style.display = 'none';
+
+      getTimeSeriesData(nodeId, "month",pollutant).then(function(monthData) {
+        makeChart(monthData, "month", pollutant);
+        loader.style.display = 'none';
+      });
+
+    } else if (timeLine == "all") {
+
+      // activate loading
+      loader.style.display = 'block';
+      chart.style.display = 'none';
+
+      getTimeSeriesData(nodeId, "all",pollutant).then(function(allData) {
+        makeChart(allData, "all", pollutant);
+        loader.style.display = 'none';
+      });
+
+    }
+
+  }
+ 
+
+
+
+
+async function DisplaySidebar(event, nodeId,coordinates, pollutant) {
+
+  // extracting general information about the node
+  const generalNodeInfo = await getInfoHelper();
+  const generalByNodeId = organizeDataByNodeId(generalNodeInfo);
+
+  // getting information for a specific pollutant
+  let pollutantNameHTML, pollutantNameJSON;
+  if (pollutant == 'co2') {
+    pollutantNameHTML = '<p>CO<sub>2</sub> Daily</p>';
+    pollutantNameJSON = 'co2_corrected';
+  } else if (pollutant == 'co') {
+    pollutantNameHTML = '<p>CO Daily</p>';
+    pollutantNameJSON = 'co_wrk_aux';
+  }
+
+  // event listener reference
+  const timelineSelectHandler = (event) => DisplayTimeseries(event, nodeId, coordinates, pollutant);
+
+
+
+    if (sidebar) {
+      // make it visable 
+      sidebar.style.display = 'block';
+
+      // add the names
+      MonitorName.innerHTML = '<p>' + generalByNodeId[nodeId]["Location"] + '</p>';
+
+      const installationDate = generalByNodeId[nodeId]["Installation Date"]; 
+      const startDate = new Date(installationDate);
+      const endDate = new Date();
+
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+
+      MonitorTimeStart.innerHTML = `<p>Installed from: ${startDate.toLocaleDateString('en-US', options)}</p>`;
+      MonitorTimeEnd.innerHTML = `<p>To: ${endDate.toLocaleDateString('en-US', options)}</p>`;
+
+      pollName.innerHTML = pollutantNameHTML;
+
+      //make Timeselect default to day 
+      timelineSelect.value = "day";
+
+      loader.style.display = 'none';
+
+
+      // display this since day is the default
+      makeChart(coordinates.filter(dataPoint => dataPoint["Node ID"] == generalByNodeId[nodeId]["Node ID"]), "day", selectedPollutant);
+    
+
+      // add the event listener for the timeseries
+      timelineSelect.addEventListener('change',timelineSelectHandler);
+
+    }
+  
+    closeButton.addEventListener('click', function(event) {
+      // Hide the sidebar
+      sidebar.style.display = 'none';
+      // remove the event listener
+      timelineSelect.removeEventListener('change', timelineSelectHandler);
+    });
+    
+    
+
+}
+
+
+
+
+//make the pollutant be passed in 
+async function makeMap(coordinates,pollutant) { 
+
+
+  var markerArray = plotMarkers(coordinates, pollutant);
+
+ 
+  // get last date that was emitted
+  const filteredCoordinates = coordinates.filter(obj => obj.datetime !== -1);
+  maxDatetime = filteredCoordinates.reduce((max, obj) => obj.datetime > max ? obj.datetime : max, "");
+
+
+  for (const item of markerArray) {
+    const circleMarker = item.marker;
+    const nodeId = item.nodeId;
+    circleMarker.on('click', (event) => DisplaySidebar(event,nodeId, coordinates, pollutant));
+  }
+  
+  
+}
+
+console.log("Pollutant:", selectedPollutant);
+
+//make a function that deals with initializing the map 
+async function initMap(){
+
+  // ask for the pollutant data and make co2 the default
+  co2Array = await updateMainData(selectedPollutant);
+  
+
+  // call the map function and make the map
+  makeMap(co2Array, selectedPollutant);
+
+  if (selectedPollutant == 'co2') {
+    complimentaryPollutant = 'co';
+  } else if (selectedPollutant == 'co') {
+    complimentaryPollutant = 'co2';
+  }
+
+}
+
+
+initMap().then( async function() {
+  console.log("Processing fetch of data for CO  ...");
+  coArray = await updateMainData(complimentaryPollutant);
+  console.log("Data fetch complete!");
 });
+
+// asynchronous fetching for after call 
+async function updateMap(pollutant) {
+  if (pollutant == "co") {
+    coArray = await updateMainData("co");
+    makeMap(coArray, pollutant).then(function() {
+      co2Array = updateMainData("co2");
+    });
+  } else if (pollutant == "co2"){
+    co2Array = await updateMainData("co2");
+    makeMap(co2Array, pollutant).then(function() {
+      coArray = updateMainData("co");
+    });
+  }
+
+}
+
+
+
+// Function to calculate the time until the next straight hour
+function timeUntilNextHour() {
+  const now = new Date();
+  const nextHour = new Date(now);
+  nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0); 
+  const nextTime = nextHour.getTime() - now.getTime()
+  console.log("Time until the next hour:", nextTime, "milliseconds");
+  return nextTime;
+}
+
+
+function scheduleDataUpdate() {
+  const delay = 10000; 
+  const timeUntilNext = timeUntilNextHour();
+  
+  console.log("Scheduling update in", timeUntilNext + delay, "milliseconds");
+  
+
+  //TODO come back to this
+  setTimeout(() => {
+    updateMap(selectedPollutant);
+    setInterval(processData, 3600000); // Schedule subsequent updates every hour
+    console.log("Update successful!");
+  }, timeUntilNext + delay);
+}
+
+
+// Call the initial scheduling function
+scheduleDataUpdate();
+
+
+
+
+
+
 
 
