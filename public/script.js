@@ -1,4 +1,5 @@
 
+
 const apiKey = 'pk.eyJ1IjoiYWxmcmVkMjAxNiIsImEiOiJja2RoMHkyd2wwdnZjMnJ0MTJwbnVmeng5In0.E4QbAFjiWLY8k3AFhDtErA';
 
 const mymap = L.map('map').setView([41.831392, -71.417804], 12.5);
@@ -319,6 +320,23 @@ async function getTimeSeriesData(node, timeLine, pollutant) {
 }
 
 
+async function updateMainData(pollutant) {
+  //maybe add a trigger for new data here
+  const response = await axios.get('/main_data', {
+    params: {
+      pollutant_type: pollutant
+    }
+  });
+  return response.data;
+
+}
+
+
+// Global variables for pollutants
+let co2Array = [];
+let coArray = [];
+let complimentaryPollutant = "";
+
 
 
 function updatePollutant(div) {
@@ -347,6 +365,8 @@ function updatePollutant(div) {
     ChartTitle.innerHTML =  "Average CO<sub>2</sub> Levels";
     loader.style.borderTop = '8px solid darkblue';
     concentrationDef.innerHTML = '<b> Concentration (ppm):<b>';
+
+    makeMap(co2Array, selectedPollutant);
     
 
   } else if (radioCO.checked) {
@@ -365,8 +385,9 @@ function updatePollutant(div) {
    loader.style.borderTop = '8px solid darkgreen';
    concentrationDef.innerHTML = '<b> Concentration (V):           <b>';
 
+   makeMap(coArray, selectedPollutant);
+
   }
-  makeMap(selectedPollutant);
   console.log("Updates requested for: ", selectedPollutant);
 }
 
@@ -428,16 +449,6 @@ mymap.addControl(legendControl);
 
 
 
-async function updateMainData(pollutant) {
-  //maybe add a trigger for new data here
-  const response = await axios.get('/main_data', {
-    params: {
-      pollutant_type: pollutant
-    }
-  });
-  return response.data;
-
-}
 
 // Fetching the general data info
 async function getInfoHelper(){
@@ -459,12 +470,19 @@ function organizeDataByNodeId(jsonData) {
   return dataByNodeId;
 }
 
+//GLOBAL VARIABLES
+var markerArray = [];
 
 
 //plot markers helper
 function plotMarkers(coordinates, pollutant) {
 
-  var markerArray = [];
+  // marker array not empty then loop throuh and remove all of the markers
+  if (markerArray.length > 0) {
+    for (let i = 0; i < markerArray.length; i++) {
+      mymap.removeLayer(markerArray[i].marker);
+    }
+  }
 
   //setting names
   let pollutantName, measurement,measurementName,roundPollutantBy;
@@ -599,7 +617,7 @@ async function DisplaySidebar(event, nodeId,coordinates, pollutant) {
 
   console.log(nodeId);
   // getting information for a specific pollutant
-  let pollutantNameHTML,pollutantNameJSON;
+  let pollutantNameHTML, pollutantNameJSON;
   if (pollutant == 'co2') {
     pollutantNameHTML = '<p>CO<sub>2</sub> Daily</p>';
     pollutantNameJSON = 'co2_corrected';
@@ -658,11 +676,11 @@ async function DisplaySidebar(event, nodeId,coordinates, pollutant) {
 }
 
 
+
+
 //make the pollutant be passed in 
-async function makeMap(pollutant) { 
+async function makeMap(coordinates,pollutant) { 
 
-
-  var coordinates = await updateMainData(pollutant);
 
   var markerArray = plotMarkers(coordinates, pollutant);
 
@@ -680,10 +698,49 @@ async function makeMap(pollutant) {
   
   
 }
-// TODO: Change this to be the currently working code
-// would have to keep the pollutant as global variable?
+
 console.log("Pollutant:", selectedPollutant);
-makeMap(selectedPollutant);
+
+//make a function that deals with initializing the map 
+async function initMap(){
+
+  // ask for the pollutant data and make co2 the default
+  co2Array = await updateMainData(selectedPollutant);
+  
+
+  // call the map function and make the map
+  makeMap(co2Array, selectedPollutant);
+
+  if (selectedPollutant == 'co2') {
+    complimentaryPollutant = 'co';
+  } else if (selectedPollutant == 'co') {
+    complimentaryPollutant = 'co2';
+  }
+
+}
+
+
+initMap().then( async function() {
+  console.log("Processing fetch of data for CO  ...");
+  coArray = await updateMainData(complimentaryPollutant);
+  console.log("Data fetch complete!");
+});
+
+// asynchronous fetching for after call 
+async function updateMap(pollutant) {
+  if (pollutant == "co") {
+    coArray = await updateMainData("co");
+    makeMap(coArray, pollutant).then(function() {
+      co2Array = updateMainData("co2");
+    });
+  } else if (pollutant == "co2"){
+    co2Array = await updateMainData("co2");
+    makeMap(co2Array, pollutant).then(function() {
+      coArray = updateMainData("co");
+    });
+  }
+
+}
 
 
 
@@ -707,7 +764,7 @@ function scheduleDataUpdate() {
 
   //TODO come back to this
   setTimeout(() => {
-    makeMap(selectedPollutant);
+    updateMap(selectedPollutant);
     setInterval(processData, 3600000); // Schedule subsequent updates every hour
     console.log("Update successful!");
   }, timeUntilNext + delay);
