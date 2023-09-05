@@ -9,7 +9,6 @@ const mymap = L.map('map').setView([41.831392, -71.417804], 12.5);
 const date_obj = new Date();
 date_obj.setHours(date_obj.getHours() - 1);
 
-console.log(date_obj);
 const currentYear = date_obj.getFullYear().toString();
 const currentMonth = (date_obj.getMonth() + 1).toString().padStart(2, '0');
 const currentDate = date_obj.getDate().toString().padStart(2, '0');
@@ -137,9 +136,6 @@ async function makeChart(data,timeRange,pollutant) {
   // variablesfor styling and chart
   let textTitle, textTitleMeasure, chartColor,adjustRange,measurement;
 
-  console.log(data);
-  console.log(timeRange);
-  console.log(pollutant);
 
   // setting variables based on pollutant
   if (pollutant == 'co2') {
@@ -170,7 +166,6 @@ async function makeChart(data,timeRange,pollutant) {
 
   }
 
-  console.log(pollutant_corrected);
 
   // Accounting for null data + styling
   if (pollutant_corrected.length === 0) {
@@ -383,7 +378,7 @@ function updatePollutant(div) {
    NetworkName.style.backgroundImage = "url('./icons/breathe_icon_green.png')";
    ChartTitle.innerHTML =  "Average CO Levels";
    loader.style.borderTop = '8px solid darkgreen';
-   concentrationDef.innerHTML = '<b> Concentration (V):           <b>';
+   concentrationDef.innerHTML = '<b> Concentration (V):<b>';
 
    makeMap(coArray, selectedPollutant);
 
@@ -501,21 +496,11 @@ function plotMarkers(coordinates, pollutant) {
   }
 
 
-  console.log(coordinates);
-
-  console.log(CurrentDate);
-
-  // there should be around 22 nodes
-
 
   // correct to make sure that we are only plotting unique markers with values
   const filteredData = coordinates.filter(item => {
-    console.log(item.datetime);
-    console.log(CurrentDate)
     return item.datetime === CurrentDate || item.datetime == -1;
   });
-
-  console.log(filteredData);
 
 
   for (let i = 0; i < filteredData.length; i++) {
@@ -532,8 +517,7 @@ function plotMarkers(coordinates, pollutant) {
     fillOpacity: 0.8
     });
 
-  // you have to make sure that these are unique
-  console.log(circleMarker);
+  
 
   // if the marker is not  already in the array, add it
   if (!markerArray.includes(circleMarker)){
@@ -615,7 +599,6 @@ async function DisplaySidebar(event, nodeId,coordinates, pollutant) {
   const generalNodeInfo = await getInfoHelper();
   const generalByNodeId = organizeDataByNodeId(generalNodeInfo);
 
-  console.log(nodeId);
   // getting information for a specific pollutant
   let pollutantNameHTML, pollutantNameJSON;
   if (pollutant == 'co2') {
