@@ -15,15 +15,13 @@ import json
 import pytz
 import time
 import sys
+import io
 
 ################# 
 
 
-###Receiving incoming arguments
-
-
 pollutant = str(sys.argv[1])
-# pollutant = "co2"
+# pollutant = "co"
 
 
 
@@ -34,7 +32,7 @@ FAILED_REQUESTS = {"node_id":[], "location":[], "time":[]}
 
 ###PRE-CODING READING
 
-def get_requests(node_name, node_id, variable, start_date, start_time, end_date, end_time):
+def generate_url(node_name, node_id, variable, start_date, start_time, end_date, end_time):
     """Given a node_id, measure, start date and end date return the raw cvs files for that node """
 
     base_url = "http://128.32.208.8"
@@ -51,8 +49,9 @@ def get_requests(node_name, node_id, variable, start_date, start_time, end_date,
 def get_requests_for_row(row, start_date, end_date, variable, start_time, end_time):
     """Helper for get_data. Gets requets for a given row, for a pre-defined start-date, end-date, pollution variant and time """
 
+    
+    url = generate_url(urllib.parse.quote(row["Location"]), row["Node ID"], variable, start_date, start_time, end_date, end_time)
 
-    url = get_requests(urllib.parse.quote(row["Location"]), row["Node ID"], variable, start_date, start_time, end_date, end_time)
     try:
         data = pd.read_csv(url)
     except:
@@ -65,16 +64,6 @@ def get_requests_for_row(row, start_date, end_date, variable, start_time, end_ti
 
     return data
 
-def store_failed_requests(failed_requests):
-    
-    #get values from the failed requests from the csv
-    failed_df = pd.read_csv("data/logs/failed_logs.csv")
-
-    #add the most recent FAILED_REQUESTS to the dataframe
-    failed_df = failed_df.append(failed_requests, ignore_index=True)
-
-    #add the current logs to table, add to the csv file
-    failed_df.to_csv("data/logs/failed_logs.csv", index=False)
 
 
 def get_data(data, start_date, end_date, variable, start_time, end_time):
@@ -83,6 +72,32 @@ def get_data(data, start_date, end_date, variable, start_time, end_time):
     combined = pd.concat(all_data.values,sort=True)
     return combined
 
+def get_all_data(sensors_df, start_date, end_date, variable, start_time, end_time):
+
+    #get a list of the Node IDS
+    node_ids = sensors_df["Node ID"].tolist()
+
+    #get a list of the locations
+    locations = sensors_df["Location"].tolist()
+
+    data = ""
+
+
+    for i in range(len(node_ids)):
+        url = generate_url(urllib.parse.quote(locations[i]), node_ids[i], variable, start_date, start_time, end_date, end_time)
+        response = requests.get(url)
+
+        if response.status_code == 200:
+          # Remove the header (first line) from the response content
+          if i == 0:
+            data += response.text
+          content_lines = response.text.split('\n')
+          data_content = '\n'.join(content_lines[1:])
+          data += data_content
+    return pd.read_csv(io.StringIO(data))
+
+           
+            
 
 ### DATA CLEANING 
 
@@ -206,8 +221,9 @@ def convert_final():
       VARIABLE = "co_wrk_aux"
       
 
-   
-    data = clean_data(get_data(sensors_df,start_date, end_date, VARIABLE, start_time, end_time),pollutant)
+
+    data = get_data(sensors_df,start_date, end_date, VARIABLE, start_time, end_time)
+    data = clean_data(data,pollutant)
 
 
     data.sort_values(by='datetime', ascending=True, inplace=True)
@@ -220,7 +236,6 @@ def convert_final():
     combined_data = combined_data.drop(["node_id"], axis='columns')
     combined_data['Latitude'] = combined_data['Latitude'].apply(convert_latitude)
     combined_data['Longitude'] = combined_data['Longitude'].apply(convert_longitude)
-
    
 
 
@@ -230,7 +245,8 @@ def convert_final():
     #save failed logs
     # store_failed_requests(combined_data)
     
-
+   
+  
     #save as csv 
     combined_data.to_csv(os.path.join("./data/tests", 'coords.csv'), index=False)
     
@@ -246,8 +262,11 @@ def convert_final():
 
 # ### File is correct 
 final_data = convert_final()
-print(final_data, flush=True)
-# print(len(final_data))
+
+print(final_data,flush=True)
+
+# print("--- %s seconds ---" % (time.time() - start_time))
+
 
 
 

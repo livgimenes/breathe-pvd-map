@@ -7,7 +7,7 @@ const mymap = L.map('map').setView([41.831392, -71.417804], 12.5);
 
 // Constants
 const date_obj = new Date();
-date_obj.setHours(date_obj.getHours() - 1);
+date_obj.setHours(date_obj.getHours() - 2);
 
 const currentYear = date_obj.getFullYear().toString();
 const currentMonth = (date_obj.getMonth() + 1).toString().padStart(2, '0');
@@ -472,6 +472,8 @@ var markerArray = [];
 //plot markers helper
 function plotMarkers(coordinates, pollutant) {
 
+  console.log(coordinates);
+
   // marker array not empty then loop throuh and remove all of the markers
   if (markerArray.length > 0) {
     for (let i = 0; i < markerArray.length; i++) {
@@ -497,16 +499,18 @@ function plotMarkers(coordinates, pollutant) {
 
 
 
-  // correct to make sure that we are only plotting unique markers with values
-  const filteredData = coordinates.filter(item => {
-    return item.datetime === CurrentDate || item.datetime == -1;
-  });
+  // correct to make sure that we are only plotting unique markers with values 
+  // currently not including the null values, might have to include those later 
+  // coordinates = coordinates.filter(item => {
+  //   return item.datetime === CurrentDate || item.datetime == -1;
+  // });
+  
+  console.log(coordinates);
 
-
-  for (let i = 0; i < filteredData.length; i++) {
-    const lat = filteredData[i]["Latitude"];
-    const lon = filteredData[i]["Longitude"];
-    let color = getColor(filteredData[i][pollutantName], pollutant);
+  for (let i = 0; i < coordinates.length; i++) {
+    const lat = coordinates[i]["Latitude"];
+    const lon = coordinates[i]["Longitude"];
+    let color = getColor(coordinates[i][pollutantName], pollutant);
 
 
   let circleMarker = L.circleMarker([lat, lon], {
@@ -521,18 +525,22 @@ function plotMarkers(coordinates, pollutant) {
 
   // if the marker is not  already in the array, add it
   if (!markerArray.includes(circleMarker)){
-    markerArray.push({ marker: circleMarker, nodeId:filteredData[i]["Node ID"] });
+    markerArray.push({ marker: circleMarker, nodeId:coordinates[i]["Node ID"] });
   }
 
-  let roundedPollutant = filteredData[i][pollutantName].toFixed(roundPollutantBy);
+  console.log("Pre error code")
+  console.log(coordinates[i][pollutantName]);
+  console.log(pollutantName);
+  console.log(typeof coordinates[i][pollutantName]);
+  let roundedPollutant = coordinates[i][pollutantName].toFixed(roundPollutantBy);
 
 
   // TODO: Revise this part
-  if(filteredData[i][pollutantName] == -1) {
+  if(coordinates[i][pollutantName] == -1) {
     //TODO: Change this include other things about the pollutant
-    circleMarker.bindPopup("Location: " + filteredData[i]["Location"] + "<br>" + measurementName + " Level: Not Available");
+    circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + measurementName + " Level: Not Available");
   }else{
-    circleMarker.bindPopup("Location: " + filteredData[i]["Location"] + "<br>" + measurementName + " Level: " + roundedPollutant + measurement);
+    circleMarker.bindPopup("Location: " + coordinates[i]["Location"] + "<br>" + measurementName + " Level: " + roundedPollutant + measurement);
   }
   circleMarker.addTo(mymap);
 

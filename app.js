@@ -13,7 +13,9 @@ app.get('/', (req, res) => {
 app.get('/main_data', async (req, res) => {
   try {
     const { pollutant_type} = req.query;
+    console.log(pollutant_type);
     const data = await getMainData(pollutant_type);
+    console.log(data);
     res.send(data);
     console.log("Data Sent at " + new Date().toLocaleString());
   } catch (error) {
@@ -25,7 +27,8 @@ app.get('/main_data', async (req, res) => {
 // Helper function for the main_data
 async function getMainData(pollutant_type) {
   return new Promise((resolve, reject) => {
-    const updateScript = spawn('python3', ['data/update_pollutants.py', pollutant_type]);
+    //data/update_pollutants.py for non-optimized version
+    const updateScript = spawn('python3', ['data/update_pollutants_optimized.py', pollutant_type]);
 
     let stdout = ''; 
 
@@ -38,11 +41,14 @@ async function getMainData(pollutant_type) {
       console.error(`stderr: ${data}`);
     });
 
+    console.log(stdout);
+
     updateScript.on('close', (code) => {
       console.log(`Json is updated. Child process exited with code ${code}`);
 
       try {
         const parsedData = JSON.parse(stdout);
+        console.log(parsedData);
         resolve(parsedData); 
       } catch (error) {
         reject(error); 

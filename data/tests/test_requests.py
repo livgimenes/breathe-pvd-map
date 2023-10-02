@@ -107,7 +107,26 @@ end_time = str(curr_time)[11:19]
 variable = "co2_corrected_avg_t_drift_applied,temp"
 
 
-data = get_data(sensors_df,start_date, end_date, variable, start_time, end_time)
+# data = get_data(sensors_df,start_date, end_date, variable, start_time, end_time)
 
 
-print(data)
+# print(data)
+
+
+#try to generate all of the nodes
+
+url = "http://128.32.208.8/node/268/measurements_all/csv?name=Providence%20College&interval=60&variables=co2_corrected_avg_t_drift_applied&start=2023-09-13%2011:00:00&end=2023-09-14%2011:00:00&char_type=measurement"
+
+response = requests.get(url)
+print(response.text)
+
+
+
+
+
+
+
+
+
+
+
