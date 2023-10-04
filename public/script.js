@@ -694,15 +694,11 @@ console.log("Pollutant:", selectedPollutant);
 //make a function that deals with initializing the map 
 async function initMap(){
 
-  centralLoader.style.display = 'block';
-
   // ask for the pollutant data and make co2 the default
   co2Array = await updateMainData(selectedPollutant);
   
   // call the map function and make the map
-  makeMap(co2Array, selectedPollutant).then(function() {
-    centralLoader.style.display = 'none';
-  });
+  makeMap(co2Array, selectedPollutant);
 
   if (selectedPollutant == 'co2') {
     complimentaryPollutant = 'co';
