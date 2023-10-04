@@ -215,21 +215,19 @@ async def convert_final():
     file_path = os.path.join(directory, file_name)
     sensors_df = pd.read_csv(file_path,usecols=["Sensor ID","Node ID","Location","Latitude","Longitude","Installation Date"])
 
-
-
     curr_time = est_to_pst(datetime.datetime.now())
 
     ##subtract 1 day from current time
     start_time = curr_time - datetime.timedelta(days=1)
 
 
-    ######## FOR TESTING AND DEMO ONLY
-
-    # # make starttime be September 1st 2023, at 2 pm 
+    ######## FOR TESTING AND DEMO ONLY #############
+    # # # make starttime be September 1st 2023, at 2 pm 
     # start_time = datetime.datetime(2023,9,1,14,0,0)
 
-    # # #make end time septmeber 3rd 2023, at 2 pm
+    # # # #make end time septmeber 3rd 2023, at 2 pm
     # curr_time = datetime.datetime(2023,9,3,14,0,0)
+    ################################################
 
 
     #round curr_time and start_time to the nearest hour

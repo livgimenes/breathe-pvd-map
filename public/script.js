@@ -45,6 +45,7 @@ var noChart = document.getElementById('noChart');
 var chart = document.getElementById('chart');
 var NetworkName = document.getElementById('NetworkName');
 var ChartTitle = document.getElementById("LevelTitle");
+var centralLoader = document.getElementById('central-loader');
 
 
 L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
@@ -449,6 +450,8 @@ mymap.addControl(legendControl);
 async function getInfoHelper(){
   const response = await fetch('sensors_with_nodes.json');
   const data = await response.json();
+  // log all of the locations
+  console.log(data);
   return data;
 
 }
@@ -472,7 +475,7 @@ var markerArray = [];
 //plot markers helper
 function plotMarkers(coordinates, pollutant) {
 
-  console.log(coordinates);
+ 
 
   // marker array not empty then loop throuh and remove all of the markers
   if (markerArray.length > 0) {
@@ -505,7 +508,6 @@ function plotMarkers(coordinates, pollutant) {
   //   return item.datetime === CurrentDate || item.datetime == -1;
   // });
   
-  console.log(coordinates);
 
   for (let i = 0; i < coordinates.length; i++) {
     const lat = coordinates[i]["Latitude"];
@@ -528,10 +530,7 @@ function plotMarkers(coordinates, pollutant) {
     markerArray.push({ marker: circleMarker, nodeId:coordinates[i]["Node ID"] });
   }
 
-  console.log("Pre error code")
-  console.log(coordinates[i][pollutantName]);
-  console.log(pollutantName);
-  console.log(typeof coordinates[i][pollutantName]);
+  
   let roundedPollutant = coordinates[i][pollutantName].toFixed(roundPollutantBy);
 
 
@@ -695,12 +694,15 @@ console.log("Pollutant:", selectedPollutant);
 //make a function that deals with initializing the map 
 async function initMap(){
 
+  centralLoader.style.display = 'block';
+
   // ask for the pollutant data and make co2 the default
   co2Array = await updateMainData(selectedPollutant);
   
-
   // call the map function and make the map
-  makeMap(co2Array, selectedPollutant);
+  makeMap(co2Array, selectedPollutant).then(function() {
+    centralLoader.style.display = 'none';
+  });
 
   if (selectedPollutant == 'co2') {
     complimentaryPollutant = 'co';
