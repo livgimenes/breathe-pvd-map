@@ -190,11 +190,11 @@
   border: 8px solid #ffffff;
   border-radius: 50%;
   border-top: 8px solid darkblue;
-  top: 50%;
+  top: 54%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 100px;
-  height: 100px;
+  width: 54px;
+  height: 54px;
   animation: spinner 1.5s linear infinite;
   z-index: 999;
 
