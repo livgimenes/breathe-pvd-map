@@ -187,12 +187,16 @@
 #central-loader {
   position: absolute;
   margin: auto;
-  border: 8px solid #f3f3f3;
+  border: 8px solid #ffffff;
   border-radius: 50%;
-  border-top: 8px solid lightskyblue;
+  border-top: 8px solid darkblue;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: 100px;
   height: 100px;
   animation: spinner 1.5s linear infinite;
+  z-index: 999;
 
 }
   

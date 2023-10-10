@@ -475,7 +475,6 @@ var markerArray = [];
 //plot markers helper
 function plotMarkers(coordinates, pollutant) {
 
- 
 
   // marker array not empty then loop throuh and remove all of the markers
   if (markerArray.length > 0) {
@@ -508,6 +507,7 @@ function plotMarkers(coordinates, pollutant) {
   //   return item.datetime === CurrentDate || item.datetime == -1;
   // });
   
+
 
   for (let i = 0; i < coordinates.length; i++) {
     const lat = coordinates[i]["Latitude"];
@@ -544,6 +544,11 @@ function plotMarkers(coordinates, pollutant) {
   circleMarker.addTo(mymap);
 
 }
+
+centralLoader.style.display = 'none';
+
+
+
 console.log(markerArray);
 return markerArray;
 
@@ -693,6 +698,8 @@ console.log("Pollutant:", selectedPollutant);
 
 //make a function that deals with initializing the map 
 async function initMap(){
+
+  centralLoader.style.display = 'block';
 
   // ask for the pollutant data and make co2 the default
   co2Array = await updateMainData(selectedPollutant);
