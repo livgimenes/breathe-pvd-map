@@ -396,7 +396,8 @@ class LegendControl extends L.Control {
       div.style.backgroundColor = "white";
       div.style.padding = "6px";
       div.style.borderRadius = "6px";
-      div.style.width = "max-content";
+      div.style.width = "141.28px";
+      div.style.height = "317.29px";
       div.style.position = "absolute";
       div.style.right = "610px";
       div.style.top = "450px";
