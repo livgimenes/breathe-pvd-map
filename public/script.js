@@ -1,3 +1,4 @@
+import { getColor, processData,getInfoHelper, organizeDataByNodeId} from './utils/helpers.js';
 
 
 const apiKey = 'pk.eyJ1IjoiYWxmcmVkMjAxNiIsImEiOiJja2RoMHkyd2wwdnZjMnJ0MTJwbnVmeng5In0.E4QbAFjiWLY8k3AFhDtErA';
@@ -57,76 +58,7 @@ L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
 }).addTo(mymap);
 
 
-//// Non-Data Handling Helpers
-function normalize(value, min, max) {
-  return (value - min) / (max - min);
-}
 
-function roundToDecimal(number, decimalPlaces) {
-  const factor = 10 ** decimalPlaces;
-  return parseFloat((Math.round(number * factor) / factor).toFixed(decimalPlaces));
-}
-
-//change this to be a value and a type of pollutant
-function getColor(value, pollutant) {
-
-
-  // add an if statement that changes the color and scale values based on the color
-  let color1, color2, percent;
-
-
-  if(pollutant == 'co2') {
-    color1 = [0, 31, 102];  // dark blue
-    color2 = [229, 237, 255];  // light blue
-    percent = 1 - (value - 350) / 200;
-
-    
-  } else if (pollutant == 'co') {
-    color1 = [234, 255, 236];
-    color2 =  [0,100,0];
-    percent = normalize(value, 0, 0.4); // Normalizing to [0, 1]
-  }
-  
-
-
-  if(value == -1) {
-    return `#F5F5F5`};
-
-
-  const color = [
-    Math.round(color1[0] + (color2[0] - color1[0]) * percent),
-    Math.round(color1[1] + (color2[1] - color1[1]) * percent),
-    Math.round(color1[2] + (color2[2] - color1[2]) * percent)
-  ];
-
-
-  return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
-}
-
-// condenses the data by calculating the average
-function processData(datetime, correctPollutant, chunkSize) {
-
-  const dates = datetime.map(date => new Date(date));
-  const data = dates.map((date, i) => ({ date, pollutant: correctPollutant[i] }));
-
-  data.sort((a, b) => a.date - b.date);
-
-  const chunkedData = _.chunk(data, chunkSize);
- 
-
-  const processedData = chunkedData.map(chunk => {
-    const avgPollutant = _.meanBy(chunk, 'pollutant');
-    const avgDate = chunk[Math.floor(chunk.length / 2)].date;
-    const pcDate = avgDate.toISOString().slice(0, 19).replace('T', ' ');
-    return { date: pcDate, pollutant: avgPollutant};
-  });
-
-  
-  let processedDatetime = processedData.map(d => d.date);
-  const processedPollutant = processedData.map(d => d.pollutant);
-
-  return { processedDatetime, processedPollutant };
-}
 
 
 async function makeChart(data,timeRange,pollutant) {
@@ -368,6 +300,10 @@ function updatePollutant(div) {
   } else if (radioCO.checked) {
     console.log('co checked');
 
+    //maybe add the conditional here
+    console.log(coArray);
+
+
     //changing the legend 
     gradientDiv.style.background = "linear-gradient(to bottom,rgb(0,100,0), rgb(116, 150, 113), rgb(143, 188, 139), rgb(209, 242, 206), rgb(236, 252, 235))";
     maxValue.innerHTML = '0.4 V';
@@ -447,28 +383,6 @@ mymap.addControl(legendControl);
 
 
 
-// Fetching the general data info
-async function getInfoHelper(){
-  const response = await fetch('sensors_with_nodes.json');
-  const data = await response.json();
-  // log all of the locations
-  console.log(data);
-  return data;
-
-}
-
-function organizeDataByNodeId(jsonData) {
-  var dataByNodeId = {};
-
-  // Iterate through the original JSON data and organize it by Node ID
-  jsonData.forEach(function(sensor) {
-    var nodeId = sensor["Node ID"];
-    dataByNodeId[nodeId] = sensor;
-  });
-
-  return dataByNodeId;
-}
-
 //GLOBAL VARIABLES
 var markerArray = [];
 
@@ -499,15 +413,6 @@ function plotMarkers(coordinates, pollutant) {
     measurementName = "CO";
     roundPollutantBy = 3;
   }
-
-
-
-  // correct to make sure that we are only plotting unique markers with values 
-  // currently not including the null values, might have to include those later 
-  // coordinates = coordinates.filter(item => {
-  //   return item.datetime === CurrentDate || item.datetime == -1;
-  // });
-  
 
 
   for (let i = 0; i < coordinates.length; i++) {
@@ -549,8 +454,6 @@ function plotMarkers(coordinates, pollutant) {
 centralLoader.style.display = 'none';
 
 
-
-console.log(markerArray);
 return markerArray;
 
 
@@ -683,7 +586,7 @@ async function makeMap(coordinates,pollutant) {
  
   // get last date that was emitted
   const filteredCoordinates = coordinates.filter(obj => obj.datetime !== -1);
-  maxDatetime = filteredCoordinates.reduce((max, obj) => obj.datetime > max ? obj.datetime : max, "");
+ 
 
 
   for (const item of markerArray) {
@@ -695,7 +598,6 @@ async function makeMap(coordinates,pollutant) {
   
 }
 
-console.log("Pollutant:", selectedPollutant);
 
 //make a function that deals with initializing the map 
 async function initMap(){
