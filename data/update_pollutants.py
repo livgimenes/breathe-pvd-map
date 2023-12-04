@@ -20,8 +20,9 @@ import io
 ################# 
 
 
-pollutant = str(sys.argv[1])
-# pollutant = "co"
+
+# pollutant = str(sys.argv[1])
+pollutant = "co"
 
 
 
@@ -158,8 +159,8 @@ def clean_data(data, pollutant):
     data["co2_corrected"] = data["co2_corrected"].map(lambda x: round(x))
 
   elif pollutant == "co":
-    data = data.replace({"co_wrk_aux": {-999.00000: np.nan}})
-    data = data.dropna(subset=['local_timestamp', "co_wrk_aux"])
+    data = data.replace({"co_corrected": {-999.00000: np.nan}})
+    data = data.dropna(subset=['local_timestamp', "co_corrected"])
 
 
   #change time zones, make it display in actual est time
@@ -218,7 +219,7 @@ def convert_final():
     if pollutant == "co2":
       VARIABLE = "co2_corrected_avg_t_drift_applied"
     elif pollutant == "co":
-      VARIABLE = "co_wrk_aux"
+      VARIABLE = "co_corrected"
       
 
 
@@ -244,6 +245,10 @@ def convert_final():
 
     #save failed logs
     # store_failed_requests(combined_data)
+
+
+    #get all of the value for co, and put them in a list
+    
     
    
   
@@ -253,6 +258,8 @@ def convert_final():
 
     #comment this out if it works 
     combined_data.to_json(os.path.join(directory, 'coords.json'), orient='records')
+
+    
 
     return print_comb
 

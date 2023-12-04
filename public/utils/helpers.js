@@ -28,7 +28,7 @@ export function getColor(value, pollutant) {
   } else if (pollutant == 'co') {
     color1 = [234, 255, 236];
     color2 =  [0,100,0];
-    percent = normalize(value, 0, 0.4); 
+    percent = normalize(value, 0, 2); 
   }
   //add more pollutants here
 
