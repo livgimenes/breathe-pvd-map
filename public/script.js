@@ -1,4 +1,4 @@
-import { getColor, processData,getInfoHelper, organizeDataByNodeId} from './utils/helpers.js';
+import { getColor, processData,getInfoHelper, organizeDataByNodeId, updatePollutant} from './utils/helpers.js';
 
 
 const apiKey = 'pk.eyJ1IjoiYWxmcmVkMjAxNiIsImEiOiJja2RoMHkyd2wwdnZjMnJ0MTJwbnVmeng5In0.E4QbAFjiWLY8k3AFhDtErA';
@@ -265,63 +265,6 @@ let co2Array = [];
 let coArray = [];
 let complimentaryPollutant = "";
 
-
-
-function updatePollutant(div) {
- 
-  //buttons
-  const gradientDiv = div.querySelector('#gradient-div');
-  const radioCO = div.querySelector('#co-option');
-  const radioCO2 = div.querySelector('#co2-option');
-  const maxValue = div.querySelector('#max-value');
-  const minValue = div.querySelector('#min-value');
-  const concentrationDef = div.querySelector('#concentration-tag');
-
-  
-  if (radioCO2.checked) {
-    console.log('co2 checked');
-
-    // changing the legend 
-    gradientDiv.style.background = "linear-gradient(to bottom, rgb(0, 31, 102), rgb(39, 74, 146), rgb(77, 117, 190), rgb(115, 160, 234), rgb(153, 187, 244), rgb(191, 213, 253), rgb(214, 226, 255), rgb(229, 237, 255))";
-    maxValue.innerHTML = '600 ppm';
-    minValue.innerHTML = '350 ppm';
-    selectedPollutant = 'co2';
-
-    //changing the chart
-    closeButton.style.backgroundImage = "url('./icons/cross_png_clean.png')";
-    NetworkName.style.backgroundImage = "url('./icons/breathe_icon.png')";
-    ChartTitle.innerHTML =  "Average CO<sub>2</sub> Levels";
-    loader.style.borderTop = '8px solid darkblue';
-    concentrationDef.innerHTML = '<b> Concentration (ppm):<b>';
-
-    makeMap(co2Array, selectedPollutant);
-    
-
-  } else if (radioCO.checked) {
-    console.log('co checked');
-
-    //maybe add the conditional here
-    console.log(coArray);
-
-
-    //changing the legend 
-    gradientDiv.style.background = "linear-gradient(to bottom,rgb(0,100,0), rgb(116, 150, 113), rgb(143, 188, 139), rgb(209, 242, 206), rgb(236, 252, 235))";
-    maxValue.innerHTML = '0.4 V';
-    minValue.innerHTML = '0 V';
-    selectedPollutant = 'co';
-
-   //changing the chart
-   closeButton.style.backgroundImage = "url('./icons/cross_green_clean.png')";  
-   NetworkName.style.backgroundImage = "url('./icons/breathe_icon_green.png')";
-   ChartTitle.innerHTML =  "Average CO Levels";
-   loader.style.borderTop = '8px solid darkgreen';
-   concentrationDef.innerHTML = '<b> Concentration (V):<b>';
-
-   makeMap(coArray, selectedPollutant);
-
-  }
-  console.log("Updates requested for: ", selectedPollutant);
-}
 
 
 
