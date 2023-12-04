@@ -531,7 +531,7 @@ function plotMarkers(coordinates, pollutant) {
     markerArray.push({ marker: circleMarker, nodeId:coordinates[i]["Node ID"] });
   }
 
-  
+ 
   let roundedPollutant = coordinates[i][pollutantName].toFixed(roundPollutantBy);
 
 
