@@ -85,11 +85,11 @@ async function makeChart(data,timeRange,pollutant) {
 
 
   }else if (pollutant == 'co') {
-    filteredData = await data.filter(d => d.co_corrected !== -1);
+    filteredData = await data.filter(d => d.co_wrk_aux !== -1);
     datetime = await filteredData.map(d => d.datetime);
-    pollutant_corrected = await filteredData.map(d => d.co_corrected);
+    pollutant_corrected = await filteredData.map(d => d.co_wrk_aux);
 
-    measurement = ' (ppb) </p>';
+    measurement = ' (V) </p>';
     roundPollutantBy = 3;
     textTitle = 'CO';
     textTitleMeasure = 'CO (V)';
@@ -306,8 +306,8 @@ function updatePollutant(div) {
 
     //changing the legend 
     gradientDiv.style.background = "linear-gradient(to bottom,rgb(0,100,0), rgb(116, 150, 113), rgb(143, 188, 139), rgb(209, 242, 206), rgb(236, 252, 235))";
-    maxValue.innerHTML = '2 ppb';
-    minValue.innerHTML = '0 ppb';
+    maxValue.innerHTML = '0.4 V';
+    minValue.innerHTML = '0 V';
     selectedPollutant = 'co';
 
    //changing the chart
@@ -315,13 +315,14 @@ function updatePollutant(div) {
    NetworkName.style.backgroundImage = "url('./icons/breathe_icon_green.png')";
    ChartTitle.innerHTML =  "Average CO Levels";
    loader.style.borderTop = '8px solid darkgreen';
-   concentrationDef.innerHTML = '<b> Concentration (ppb):<b>';
+   concentrationDef.innerHTML = '<b> Concentration (V):<b>';
 
    makeMap(coArray, selectedPollutant);
 
   }
   console.log("Updates requested for: ", selectedPollutant);
 }
+
 
 
 class LegendControl extends L.Control {
@@ -407,8 +408,8 @@ function plotMarkers(coordinates, pollutant) {
     roundPollutantBy = 0;
 
   } else if (pollutant == "co") {
-    pollutantName = "co_corrected";
-    measurement = " (ppb)";
+    pollutantName = "co_wrk_aux";
+    measurement = " (V)";
     measurementName = "CO";
     roundPollutantBy = 3;
   }
@@ -521,7 +522,7 @@ async function DisplaySidebar(event, nodeId,coordinates, pollutant) {
     pollutantNameJSON = 'co2_corrected';
   } else if (pollutant == 'co') {
     pollutantNameHTML = '<p>CO Daily</p>';
-    pollutantNameJSON = 'co_corrected';
+    pollutantNameJSON = 'co_wrk_aux';
   }
 
   // event listener reference
@@ -671,4 +672,11 @@ function scheduleDataUpdate() {
 
 // Call the initial scheduling function
 scheduleDataUpdate();
+
+
+
+
+
+
+
 

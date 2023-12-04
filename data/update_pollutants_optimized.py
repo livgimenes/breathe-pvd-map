@@ -175,10 +175,10 @@ def clean_data(data, pollutant):
     
 
   elif pollutant == "co":
-    data = data.replace({"co_corrected": {-999.00000: np.nan}})
-    data = data[data["co_corrected"] != "co_corrected"]
-    data["co_corrected"] = data["co_corrected"].apply(lambda x: float(x))
-    data = data.dropna(subset=['local_timestamp', "co_corrected"])
+    data = data.replace({"co_wrk_aux": {-999.00000: np.nan}})
+    data = data[data["co_wrk_aux"] != "co_wrk_aux"]
+    data["co_wrk_aux"] = data["co_wrk_aux"].apply(lambda x: float(x))
+    data = data.dropna(subset=['local_timestamp', "co_wrk_aux"])
 
 
   #change time zones, make it display in actual est time
@@ -244,7 +244,7 @@ async def convert_final():
     if pollutant == "co2":
       VARIABLE = "co2_corrected_avg_t_drift_applied"
     elif pollutant == "co":
-      VARIABLE = "co_corrected"
+      VARIABLE = "co_wrk_aux"
       
 
 
@@ -270,7 +270,7 @@ async def convert_final():
 
   
     #Checking uniqueness
-    # print(combined_data[combined_data["co_corrected"] != -1]["Node ID"].unique())
+    # print(combined_data[combined_data["co_wrk_aux"] != -1]["Node ID"].unique())
 
     directory = "./public"
     #TODO: switch back to combined data
