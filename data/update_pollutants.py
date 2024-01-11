@@ -158,8 +158,8 @@ def clean_data(data, pollutant):
     data["co2_corrected"] = data["co2_corrected"].map(lambda x: round(x))
 
   elif pollutant == "co":
-    data = data.replace({"co_wrk_aux": {-999.00000: np.nan}})
-    data = data.dropna(subset=['local_timestamp', "co_wrk_aux"])
+    data = data.replace({"co_corrected": {-999.00000: np.nan}})
+    data = data.dropna(subset=['local_timestamp', "co_corrected"])
 
 
   #change time zones, make it display in actual est time
@@ -218,7 +218,7 @@ def convert_final():
     if pollutant == "co2":
       VARIABLE = "co2_corrected_avg_t_drift_applied"
     elif pollutant == "co":
-      VARIABLE = "co_wrk_aux"
+      VARIABLE = "co_corrected"
       
 
 

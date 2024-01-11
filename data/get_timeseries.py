@@ -137,8 +137,8 @@ def clean_data(data):
     data["co2_corrected"] = data["co2_corrected"].map(lambda x: round(x))
 
   elif pollutant == "co":
-    data = data.replace({"co_wrk_aux": {-999.00000: np.nan}})
-    data = data.dropna(subset=['local_timestamp', "co_wrk_aux"])
+    data = data.replace({"co_corrected": {-999.00000: np.nan}})
+    data = data.dropna(subset=['local_timestamp', "co_corrected"])
 
   #change time zones, make it display in actual est time
   data['local_timestamp'] = data['local_timestamp'].map(lambda x: pst_to_est(x))
@@ -174,7 +174,7 @@ def generate_data(date,node,sensor_data):
     variable = ""
 
     if pollutant == "co":
-       variable = "co_wrk_aux"
+       variable = "co_corrected"
     elif pollutant == "co2":
         variable = "co2_corrected_avg_t_drift_applied"
     else:

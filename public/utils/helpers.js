@@ -106,7 +106,7 @@ export function organizeDataByNodeId(jsonData) {
 ///// this is temporary put back or change
 
 
-export function updatePollutant(div) {
+function updatePollutant(div) {
  
   //buttons
   const gradientDiv = div.querySelector('#gradient-div');
@@ -161,3 +161,76 @@ export function updatePollutant(div) {
   }
   console.log("Updates requested for: ", selectedPollutant);
 }
+
+
+//Constants for code
+const date_obj = new Date();
+date_obj.setHours(date_obj.getHours() - 2);
+
+const currentYear = date_obj.getFullYear().toString();
+const currentMonth = (date_obj.getMonth() + 1).toString().padStart(2, '0');
+const currentDate = date_obj.getDate().toString().padStart(2, '0');
+const currentHour = date_obj.getHours().toString().padStart(2, '0');
+
+
+var date = currentYear + '-' + currentMonth + '-' + currentDate;
+var time = currentHour + ':00:00';
+time  = currentHour + ':00:00';
+if (currentHour.length === 1) {
+  currentHour = '0' + currentHour;
+}
+
+
+
+class LegendControl extends L.Control {
+  // Define the onAdd method
+  onAdd() {
+      const div = L.DomUtil.create('div', 'legend');
+      div.style.backgroundColor = "white";
+      div.style.padding = "6px";
+      div.style.borderRadius = "6px";
+      div.style.width = "141.28px";
+      div.style.height = "317.29px";
+      div.style.position = "absolute";
+      div.style.right = "610px";
+      div.style.top = "450px";
+      div.style.fontSize = "14px";
+      div.innerHTML =  `
+      <div>
+        <b>Legend</b>
+        <br>
+        Date: ${date}
+        <br>
+        Time: ${time}
+        <br>
+        <b>Pollutants:</b>
+        <ul style="list-style: none; margin: 0; padding: 0"">
+          <li>
+            <input type="radio" id="co-option" name="selector" onchange="updatePollutant(this.parentElement.parentElement.parentElement)">
+            <label for="f-option">CO</label>
+          </li>
+          <li>
+            <input type="radio" id="co2-option" name="selector" checked="checked" onchange="updatePollutant(this.parentElement.parentElement.parentElement)">
+            <label for="s-option">CO<sub>2</sub></label>
+          </li>
+        </ul>
+          <div id="concentration-tag"><b>Concentration (ppm):</b> </div>
+          <br>
+          <div style="display: inline-block; vertical-align: top; margin-top: -20px;">
+          <div id="max-value" style="height: 20px;">600 ppm </div>
+          <div id="gradient-div" style="display:inline-block; width: 20px; height: 120px; background: linear-gradient(to bottom, rgb(0, 31, 102), rgb(39, 74, 146), rgb(77, 117, 190), rgb(115, 160, 234), rgb(153, 187, 244), rgb(191, 213, 253), rgb(214, 226, 255), rgb(229, 237, 255));;"></div>
+          <br>
+          <div id="min-value" style="height: 20px;">350 ppm </div>
+          </div>
+          </div>
+      </div>`;
+
+    
+
+
+      return div;
+  }
+}
+
+
+
