@@ -561,6 +561,8 @@ return markerArray;
 }
 
 async function DisplayTimeseries(event, nodeId,coordinates, pollutant) {
+
+  console.log(event);
     timeLine = timelineSelect.value;
     if (timeLine == "day") {
       makeChart(coordinates.filter(dataPoint => dataPoint["Node ID"] == nodeId), "day", pollutant);
@@ -605,16 +607,16 @@ async function DisplayTimeseries(event, nodeId,coordinates, pollutant) {
     }
 
   }
- 
-
 
 
 
 async function DisplaySidebar(event, nodeId,coordinates, pollutant) {
 
+
   // extracting general information about the node
   const generalNodeInfo = await getInfoHelper();
   const generalByNodeId = organizeDataByNodeId(generalNodeInfo);
+
 
   // getting information for a specific pollutant
   let pollutantNameHTML, pollutantNameJSON;
@@ -628,8 +630,6 @@ async function DisplaySidebar(event, nodeId,coordinates, pollutant) {
 
   // event listener reference
   const timelineSelectHandler = (event) => DisplayTimeseries(event, nodeId, coordinates, pollutant);
-
-
 
     if (sidebar) {
       // make it visable 
@@ -693,7 +693,7 @@ async function makeMap(coordinates,pollutant) {
   for (const item of markerArray) {
     const circleMarker = item.marker;
     const nodeId = item.nodeId;
-    circleMarker.on('click', (event) => DisplaySidebar(event,nodeId, coordinates, pollutant));
+    circleMarker.on('click', (event) => DisplaySidebar(event, nodeId, coordinates, pollutant));
   }
   
   
